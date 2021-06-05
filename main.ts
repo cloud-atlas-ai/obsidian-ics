@@ -81,15 +81,17 @@ class SampleSettingTab extends PluginSettingTab {
 					var icalText = JSON.parse(responseJson).contents;
 
 					var data = ical.parseICS(icalText);
+					var array = [];
 
-					for (let k in data) {
-						if (data.hasOwnProperty(k)) {
-							var ev = data[k];
-							if (data[k].type == 'VEVENT') {
-								console.log(`${ev.summary} is in ${ev.location} on ${ev.start}`);
+					for (let i in data) {
+						array.push(data[i]);
+						if(data[i]["recurrences"] != undefined) {
+							for (let ii in data[i]["recurrences"]) {
+							array.push(data[i]["recurrences"][ii]);
 							}
 						}
 					}
+					//array.filter((e,i) => e.type == 'VEVENT' && (moment(e.start).isSame("2021-06-04", "day") ))
 
 					this.plugin.settings.mySetting = value;
 					await this.plugin.saveSettings();
