@@ -1,4 +1,13 @@
-import { App, Modal, Notice, Plugin, PluginSettingTab, Setting } from 'obsidian';
+import {
+	App,
+	Modal,
+	Notice,
+	Plugin,
+	PluginSettingTab,
+	Setting
+} from 'obsidian';
+
+const ical = require('ical');
 
 interface MyPluginSettings {
 	mySetting: string;
@@ -12,49 +21,15 @@ export default class MyPlugin extends Plugin {
 	settings: MyPluginSettings;
 
 	async onload() {
-		console.log('loading plugin');
+		console.log('loading ical plugin');
 
 		await this.loadSettings();
 
-		this.addRibbonIcon('dice', 'Sample Plugin', () => {
-			new Notice('This is a notice!');
-		});
-
-		this.addStatusBarItem().setText('Status Bar Text');
-
-		this.addCommand({
-			id: 'open-sample-modal',
-			name: 'Open Sample Modal',
-			// callback: () => {
-			// 	console.log('Simple Callback');
-			// },
-			checkCallback: (checking: boolean) => {
-				let leaf = this.app.workspace.activeLeaf;
-				if (leaf) {
-					if (!checking) {
-						new SampleModal(this.app).open();
-					}
-					return true;
-				}
-				return false;
-			}
-		});
-
 		this.addSettingTab(new SampleSettingTab(this.app, this));
-
-		this.registerCodeMirror((cm: CodeMirror.Editor) => {
-			console.log('codemirror', cm);
-		});
-
-		this.registerDomEvent(document, 'click', (evt: MouseEvent) => {
-			console.log('click', evt);
-		});
-
-		this.registerInterval(window.setInterval(() => console.log('setInterval'), 5 * 60 * 1000));
 	}
 
 	onunload() {
-		console.log('unloading plugin');
+		console.log('unloading ical plugin');
 	}
 
 	async loadSettings() {
@@ -63,22 +38,6 @@ export default class MyPlugin extends Plugin {
 
 	async saveSettings() {
 		await this.saveData(this.settings);
-	}
-}
-
-class SampleModal extends Modal {
-	constructor(app: App) {
-		super(app);
-	}
-
-	onOpen() {
-		let {contentEl} = this;
-		contentEl.setText('Woah!');
-	}
-
-	onClose() {
-		let {contentEl} = this;
-		contentEl.empty();
 	}
 }
 
@@ -91,22 +50,50 @@ class SampleSettingTab extends PluginSettingTab {
 	}
 
 	display(): void {
-		let {containerEl} = this;
+		let {
+			containerEl
+		} = this;
 
 		containerEl.empty();
 
-		containerEl.createEl('h2', {text: 'Settings for my awesome plugin.'});
+		containerEl.createEl('h2', {
+			text: 'Settings for my awesome plugin.'
+		});
 
 		new Setting(containerEl)
-			.setName('Setting #1')
-			.setDesc('It\'s a secret')
+			.setName('iCal #1')
+			.setDesc('iCal URL')
 			.addText(text => text
-				.setPlaceholder('Enter your secret')
+				.setPlaceholder('Enter your URL')
 				.setValue('')
 				.onChange(async (value) => {
-					console.log('Secret: ' + value);
+					console.log('ical: ' + value);
+
+					//Because of CORS you can't fetch the site directly
+					var corsed = `https://api.allorigins.win/get?url=${encodeURIComponent(value)}`;
+
+					var responseJson = await fetch(corsed)
+						.then((response) => {
+							return response.text();
+						});
+
+					
+					var icalText = JSON.parse(responseJson).contents;
+
+					var data = ical.parseICS(icalText);
+
+					for (let k in data) {
+						if (data.hasOwnProperty(k)) {
+							var ev = data[k];
+							if (data[k].type == 'VEVENT') {
+								console.log(`${ev.summary} is in ${ev.location} on ${ev.start}`);
+							}
+						}
+					}
+
 					this.plugin.settings.mySetting = value;
 					await this.plugin.saveSettings();
+
 				}));
 	}
 }
