@@ -1,35 +1,61 @@
+import { FileView, TFile, View, MarkdownView } from 'obsidian';
+import { ICSSettings, DEFAULT_SETTINGS } from "src/settings/ICSSettings"
+import ICSSettingsTab from "src/settings/ICSSettingsTab"
+import { getDateFromFile } from "obsidian-daily-notes-interface";
+
 import {
 	App,
 	Modal,
 	Notice,
 	Plugin,
 	PluginSettingTab,
-	Setting
+	Setting,
+	request
 } from 'obsidian';
 
 const ical = require('ical');
+const moment = require('moment');
+const tz = require("timezone/loaded");
 
-interface MyPluginSettings {
-	mySetting: string;
-}
-
-const DEFAULT_SETTINGS: MyPluginSettings = {
-	mySetting: 'default'
-}
-
-export default class MyPlugin extends Plugin {
-	settings: MyPluginSettings;
+export default class ICS extends Plugin {
+	settings: ICSSettings;
 
 	async onload() {
-		console.log('loading ical plugin');
-
+		console.log('loading ics plugin');
 		await this.loadSettings();
+		this.addSettingTab(new ICSSettingsTab(this.app, this))
+		this.addCommand({
+			id: "import_events",
+			name: "import events",
+			hotkeys: [
+				{
+					modifiers: ["Alt", "Shift"],
+					key: 'T',
+				},
+			],
+			callback: async () => {
+				const activeView = this.app.workspace.getActiveViewOfType(MarkdownView);
+				const fileDate = getDateFromFile(activeView.file, "day").format("YYYY-MM-DD");
 
-		this.addSettingTab(new SampleSettingTab(this.app, this));
+				var icsArray = parseIcs(await request({url: this.settings.icsUrl}));
+				var todayEvents = icsArray.filter((e,i) => (moment(e.start).isSame(fileDate, "day") ));
+				console.log(todayEvents);
+
+				var mdArray: string[] = [];
+				
+				todayEvents.forEach((e) => {
+					mdArray.push(`- [ ] ${moment(e.start).format("HH:mm")} ${e.summary} ${e.location}`);
+				});
+
+				console.log(mdArray);
+
+				activeView.editor.replaceRange(mdArray.sort().join("\n"), activeView.editor.getCursor());
+			}
+		})
 	}
 
 	onunload() {
-		console.log('unloading ical plugin');
+		console.log('unloading ics plugin');
 	}
 
 	async loadSettings() {
@@ -41,61 +67,19 @@ export default class MyPlugin extends Plugin {
 	}
 }
 
-class SampleSettingTab extends PluginSettingTab {
-	plugin: MyPlugin;
+function parseIcs(ics: string) {
+	var data = ical.parseICS(ics);
+	var vevents = [];
 
-	constructor(app: App, plugin: MyPlugin) {
-		super(app, plugin);
-		this.plugin = plugin;
+	for (let i in data) {
+		if (data[i].type != "VEVENT") continue;
+		vevents.push(data[i]);
+		if (data[i]["recurrences"] != undefined) {
+			for (let ii in data[i]["recurrences"]) {
+				vevents.push(data[i]["recurrences"][ii]);
+			}
+		}
 	}
-
-	display(): void {
-		let {
-			containerEl
-		} = this;
-
-		containerEl.empty();
-
-		containerEl.createEl('h2', {
-			text: 'Settings for my awesome plugin.'
-		});
-
-		new Setting(containerEl)
-			.setName('iCal #1')
-			.setDesc('iCal URL')
-			.addText(text => text
-				.setPlaceholder('Enter your URL')
-				.setValue('')
-				.onChange(async (value) => {
-					console.log('ical: ' + value);
-
-					//Because of CORS you can't fetch the site directly
-					var corsed = `https://api.allorigins.win/get?url=${encodeURIComponent(value)}`;
-
-					var responseJson = await fetch(corsed)
-						.then((response) => {
-							return response.text();
-						});
-
-					
-					var icalText = JSON.parse(responseJson).contents;
-
-					var data = ical.parseICS(icalText);
-					var array = [];
-
-					for (let i in data) {
-						array.push(data[i]);
-						if(data[i]["recurrences"] != undefined) {
-							for (let ii in data[i]["recurrences"]) {
-							array.push(data[i]["recurrences"][ii]);
-							}
-						}
-					}
-					//array.filter((e,i) => e.type == 'VEVENT' && (moment(e.start).isSame("2021-06-04", "day") ))
-
-					this.plugin.settings.mySetting = value;
-					await this.plugin.saveSettings();
-
-				}));
-	}
+	return vevents;
 }
+
