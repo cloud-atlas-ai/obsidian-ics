@@ -1,6 +1,6 @@
 {
   "name": "obsidian-ics",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "This plugin parses downloads and parses ics",
   "main": "main.js",
   "scripts": {
@@ -11,10 +11,9 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
-    "ical": "^0.8.0",
     "moment": "^2.29.1",
-    "obsidian-daily-notes-interface": "^0.9.2",
-    "timezone": "^1.0.23"
+    "node-ical": "^0.13.0",
+    "obsidian-daily-notes-interface": "^0.9.2"
   },
   "devDependencies": {
     "@rollup/plugin-commonjs": "^18.0.0",

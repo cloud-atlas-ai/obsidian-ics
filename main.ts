@@ -13,7 +13,7 @@ import {
 	request
 } from 'obsidian';
 
-const ical = require('ical');
+const ical = require('node-ical');
 const moment = require('moment');
 const tz = require("timezone/loaded");
 
