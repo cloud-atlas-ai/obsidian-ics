@@ -1,7 +1,12 @@
 export interface ICSSettings {
-	icsUrl: string;
+    calendars: Record<string, Calendar>;
+}
+
+export interface Calendar {
+    icsUrl: string;
+	icsName: string;
 }
 
 export const DEFAULT_SETTINGS: ICSSettings = {
-	icsUrl: '',
-}
+    calendars: {}
+};
