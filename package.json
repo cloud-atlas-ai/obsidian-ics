@@ -1,6 +1,6 @@
 {
   "name": "obsidian-ics",
-  "version": "0.0.2",
+  "version": "0.9.1",
   "description": "This plugin parses downloads and parses ics",
   "main": "main.js",
   "scripts": {
