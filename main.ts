@@ -4,11 +4,14 @@ import {
 	View,
 	MarkdownView
 } from 'obsidian';
+
 import {
 	ICSSettings,
 	DEFAULT_SETTINGS
-} from "src/settings/ICSSettings"
-import ICSSettingsTab from "src/settings/ICSSettingsTab"
+} from "src/settings/ICSSettings";
+
+import ICSSettingsTab from "src/settings/ICSSettingsTab";
+
 import {
 	getDateFromFile
 } from "obsidian-daily-notes-interface";
@@ -79,6 +82,7 @@ function filterMatchingEvents(icsArray: any[], dayToMatch: string) {
 	var matchingEvents = [];
 	matchingEvents = findRecurringEvents(icsArray, dayToMatch);
 
+	// find non-recurring events on the day
 	icsArray.map((e) => {
 		if (moment(e.start).isSame(dayToMatch, "day")) {
 			matchingEvents.push(e);
@@ -96,7 +100,6 @@ function findRecurringEvents(icsArray: any[], dayToMatch: string) {
 	// console.log(rangeStart.format(), rangeEnd.format());
 
 	for (const k in icsArray) {
-
 		const event = icsArray[k];
 		const title = event.summary;
 
@@ -132,14 +135,14 @@ function findRecurringEvents(icsArray: any[], dayToMatch: string) {
 				}
 			}
 
-			// Loop through the set of date entries to see which recurrences should be printed.
+			// Loop through the set of date entries to see which recurrences should be included.
 			for (const i in dates) {
 				const date = dates[i];
 				let curEvent = event;
 				let includeRecurrence = true;
 				let curDuration = duration;
 
-				startDate = moment(date);
+				let startDate = moment(date);
 
 				// Use just the date of the recurrence to look up overrides and exceptions (i.e. chop off time information)
 				const dateLookupKey = date.toISOString().slice(0, 10);
@@ -156,9 +159,8 @@ function findRecurringEvents(icsArray: any[], dayToMatch: string) {
 					includeRecurrence = false;
 				}
 
-				// Set the the title and the end date from either the regular event or the recurrence override.
-				const recurrenceTitle = curEvent.summary;
-				endDate = moment(Number.parseInt(startDate.format('x'), 10) + curDuration, 'x');
+				// Set the the end date from the regular event or the recurrence override.
+				let endDate = moment(Number.parseInt(startDate.format('x'), 10) + curDuration, 'x');
 
 				// If this recurrence ends before the start of the date range, or starts after the end of the date range,
 				// don't process it.
