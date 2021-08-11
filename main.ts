@@ -1,7 +1,4 @@
 import {
-	FileView,
-	TFile,
-	View,
 	MarkdownView
 } from 'obsidian';
 
@@ -17,12 +14,7 @@ import {
 } from "obsidian-daily-notes-interface";
 
 import {
-	App,
-	Modal,
-	Notice,
 	Plugin,
-	PluginSettingTab,
-	Setting,
 	request
 } from 'obsidian';
 
