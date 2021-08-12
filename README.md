@@ -6,7 +6,7 @@ This only works with the Daily Note or [Periodic Notes](https://github.com/liamc
 ## Installation
 
 Manual Installation
-1. Download the latest zip file from releases.
+1. Download the latest zip file from [releases](https://github.com/muness/obsidian-ics/releases).
 2. Unpack the file. It should create a `obsidian-ics` folder.
 3. Place the folder in your .obsidian/plugins directory
 4. Reload plugins
@@ -17,7 +17,7 @@ Manual Installation
 2. Enter that URL into settings with a calendar name
 3. Go to a daily note, use the `ICS: Import events` command
 
-![](docs/2021-08-11-22-18-21.png)
+![Settings Screenshot](https://github.com/muness/obsidian-ics/blob/master/docs/2021-08-11-22-18-21.png?raw=true)
 ## Roadmap
 
 - [ ] Support templates instead of presuming the output format
