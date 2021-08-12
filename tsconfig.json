@@ -1,22 +1,11 @@
 {
   "compilerOptions": {
-    "baseUrl": ".",
-    "inlineSourceMap": true,
-    "inlineSources": true,
-    "module": "ESNext",
-    "target": "es6",
-    "allowJs": true,
-    "noImplicitAny": true,
+    "target": "es2019",
+    "module": "commonjs",
+    "esModuleInterop": true,
+    "skipLibCheck": true,
     "moduleResolution": "node",
-    "importHelpers": true,
-    "lib": [
-      "dom",
-      "es5",
-      "scripthost",
-      "es2015"
-    ]
+    "forceConsistentCasingInFileNames": true
   },
-  "include": [
-    "**/*.ts"
-  ]
+  "include": ["src/**/*.ts", "types.d.ts"]
 }

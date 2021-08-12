@@ -1,4 +1,4 @@
-import ICSPlugin from "../../main";
+import ICSPlugin from "../main";
 import {
 	PluginSettingTab,
 	Setting,
