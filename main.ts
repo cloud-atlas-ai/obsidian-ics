@@ -19,7 +19,7 @@ import {
 	request
 } from 'obsidian';
 import { parseIcs, filterMatchingEvents } from './src/icalUtils';
-import * as moment from 'moment';
+const moment = require('moment');
 
 export default class ICSPlugin extends Plugin {
 	data: ICSSettings;
