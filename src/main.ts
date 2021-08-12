@@ -19,6 +19,7 @@ import {
 	request
 } from 'obsidian';
 import { parseIcs, filterMatchingEvents } from './icalUtils';
+
 const moment = require('moment');
 
 export default class ICSPlugin extends Plugin {
