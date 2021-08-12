@@ -1,4 +1,4 @@
-import ICSPlugin from "main";
+import ICSPlugin from "../../main";
 import {
 	PluginSettingTab,
 	Setting,
@@ -10,10 +10,8 @@ import {
 } from "obsidian";
 
 import {
-	Calendar,
-	ICSSettings
+	Calendar
 } from "./ICSSettings";
-
 
 export function getCalendarElement(
 	icsName: string,
@@ -31,10 +29,10 @@ export function getCalendarElement(
 	const markdownHolder = createDiv();
 	MarkdownRenderer.renderMarkdown(icsName, markdownHolder, "", null);
 
-	const calendarTitleContent =
-		markdownHolder.children[0]?.tagName === "P" ?
-		createDiv() :
-		markdownHolder.children[0];
+	const calendarTitleContent = createDiv();
+	markdownHolder.children[0]?.tagName === "P" ?
+	createDiv() :
+	markdownHolder.children[0];
 
 	//get children of markdown element, then remove them
 	const markdownElements = Array.from(
@@ -62,6 +60,7 @@ export default class ICSSettingsTab extends PluginSettingTab {
 		super(app, plugin);
 		this.plugin = plugin;
 	}
+
 	async display(): Promise < void > {
 		let {
 			containerEl
