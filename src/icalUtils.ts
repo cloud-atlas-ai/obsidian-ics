@@ -29,6 +29,17 @@ function findRecurringEvents(icsArray: any[], dayToMatch: string) {
 		let startDate = moment(event.start);
 		let endDate = moment(event.end);
 
+		// record if event was created in different DST status than now
+		let dstChange = 0;
+
+		if(startDate.isDST() && !moment().isDST()){
+			dstChange = 1;
+		}
+
+		if(!startDate.isDST() && moment().isDST()){
+			dstChange = -1;
+		}
+
 		// Calculate the duration of the event for use with recurring events.
 		const duration = Number.parseInt(endDate.format('x'), 10) - Number.parseInt(startDate.format('x'), 10);
 
@@ -89,6 +100,8 @@ function findRecurringEvents(icsArray: any[], dayToMatch: string) {
 				}
 
 				if (includeRecurrence === true) {
+					// apply DST adjustment (this is zero if no adjustment)
+					startDate.add(dstChange, 'hours');
 					matchingRecurringEvents.push(cloneRecurringEvent(curEvent, startDate, endDate));
 				}
 			}
