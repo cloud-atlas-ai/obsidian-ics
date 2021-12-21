@@ -22,3 +22,11 @@ Manual Installation
 
 - [ ] Support templates instead of presuming the output format
 - [ ] Test with O365 and Outlook.com calendars, fix issues that I expect I'll find
+
+## Support
+
+If you want to support my work, you can [buy me a coffee](https://www.buymeacoffee.com/muness)
+
+## Contributions
+
+- [DST fix](https://github.com/muness/obsidian-ics/pull/17) from @zakkolar
