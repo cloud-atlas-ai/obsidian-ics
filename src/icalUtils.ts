@@ -99,6 +99,10 @@ function findRecurringEvents(icsArray: any[], dayToMatch: string) {
 					includeRecurrence = false;
 				}
 
+				if (startDate.isSame(curEvent.start) && endDate.isSame(curEvent.end)) {
+					includeRecurrence = false;
+				}
+
 				if (includeRecurrence === true) {
 					// apply DST adjustment (this is zero if no adjustment)
 					startDate.add(dstChange, 'hours');
