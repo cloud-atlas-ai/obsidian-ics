@@ -6,7 +6,7 @@ This only works with the Daily Note or [Periodic Notes](https://github.com/liamc
 ## Installation
 
 Manual Installation
-1. Download the latest zip file from [releases](https://github.com/muness/obsidian-ics/releases).
+1. Download the latest `obsidian-ics-[version].zip` file from [releases](https://github.com/muness/obsidian-ics/releases).
 2. Unpack the file. It should create a `obsidian-ics` folder.
 3. Place the folder in your .obsidian/plugins directory
 4. Reload plugins
