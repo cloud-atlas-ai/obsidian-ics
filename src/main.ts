@@ -40,6 +40,31 @@ export default class ICSPlugin extends Plugin {
         await this.saveSettings();
     }
 
+  async getEvents(date: string) {
+    var events: any[] = [];
+
+    for (const calendar in this.data.calendars) {
+      const calendarSetting = this.data.calendars[calendar];
+      console.log(calendarSetting);
+      var icsArray: any[] = [];
+      var icsArray = parseIcs(await request({
+        url: calendarSetting.icsUrl
+      }));
+      const todayEvents = filterMatchingEvents(icsArray, date);
+      console.log(todayEvents);
+
+      todayEvents.forEach((e) => {
+        events.push(
+          { 'time': moment(e.start).format("HH:mm"),
+            'icsName': calendarSetting.icsName,
+            'summary': e.summary,
+            'description': e.description,
+            'location': e.location
+      });});
+    }
+    return events;
+  }
+
 	async onload() {
 		console.log('loading ics plugin');
 		await this.loadSettings();
@@ -54,23 +79,12 @@ export default class ICSPlugin extends Plugin {
 			callback: async () => {
 				const activeView = this.app.workspace.getActiveViewOfType(MarkdownView);
 				const fileDate = getDateFromFile(activeView.file, "day").format("YYYY-MM-DD");
-				var mdArray: string[] = [];
+        var events: any[] = await this.getEvents(fileDate);
+        var mdArray: string [] = [];
 
-				for (const calendar in this.data.calendars) {
-					const calendarSetting = this.data.calendars[calendar];
-					console.log(calendarSetting);
-					var icsArray: any[] = [];
-					var icsArray = parseIcs(await request({
-						url: calendarSetting.icsUrl
-					}));
-					const todayEvents = filterMatchingEvents(icsArray, fileDate);
-					console.log(todayEvents);
-	
-					todayEvents.forEach((e) => {
-						mdArray.push(`- [ ] ${moment(e.start).format("HH:mm")} ${calendarSetting.icsName} ${e.summary} ${e.location}`.trim());
-					});
-				}
-
+        events.forEach((e) => {
+          mdArray.push(`- [ ] ${e.time} ${e.icsName} ${e.summary} ${e.location}`.trim())
+        });
 				activeView.editor.replaceRange(mdArray.sort().join("\n"), activeView.editor.getCursor());
 			}
 		});
