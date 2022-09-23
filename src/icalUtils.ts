@@ -1,5 +1,8 @@
-const ical = require('node-ical');
+//const ical = require('node-ical');
 const moment = require('moment');
+
+import * as ical from 'node-ical';
+import { CalendarComponent } from 'node-ical';
 
 export function filterMatchingEvents(icsArray: any[], dayToMatch: string) {
 	var matchingEvents = [];
@@ -114,18 +117,12 @@ function findRecurringEvents(icsArray: any[], dayToMatch: string) {
 	return matchingRecurringEvents;
 
 	function cloneRecurringEvent(curEvent: any, startDate: any, endDate: any) {
-		return {
-			description: curEvent.description,
-			summary: `${curEvent.summary} (recurring)`,
-			start: startDate.toDate(),
-			end: endDate.toDate(),
-			location: curEvent.location,
-		};
+		return Object.assign({},curEvent, {start: startDate, end:endDate})
 	}
 }
 export function parseIcs(ics: string) {
 	var data = ical.parseICS(ics);
-	var vevents = [];
+	var vevents : CalendarComponent[] = [];
 
 	for (let i in data) {
 		if (data[i].type != "VEVENT")
