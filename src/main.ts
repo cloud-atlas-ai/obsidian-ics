@@ -8,7 +8,7 @@ import ICSSettingsTab from "./settings/ICSSettingsTab";
 
 import { getDateFromFile } from "obsidian-daily-notes-interface";
 
-import { Plugin, request, MarkdownView } from "obsidian";
+import { Plugin, request, MarkdownView, TFile, Vault } from "obsidian";
 import { parseIcs, filterMatchingEvents } from "./icalUtils";
 import { CalendarComponent, VEvent } from "node-ical";
 import moment, { Moment } from "moment";
@@ -33,6 +33,14 @@ type Event =
 		posStart: number;
 		posEnd: number;
 	};
+
+function replaceRange(s, start, end, substitute) {
+	return s.substring(0, start) + substitute + s.substring(end);
+}
+
+function insertRange(s, start, substitute) {
+	return s.substring(0, start) + substitute + s.substring(start+1);
+}
 
 export default class ICSPlugin extends Plugin {
 	settings: ICSSettings;
@@ -92,16 +100,25 @@ export default class ICSPlugin extends Plugin {
 				},
 			],
 			callback: async () => {
-				this.insertEvents();
+				const activeView = this.app.workspace.getActiveViewOfType(MarkdownView);
+
+				
+
+				this.insertEvents(activeView.file);
 			},
 		});
 	}
 
-	private async insertEvents() {
-		const activeView = this.app.workspace.getActiveViewOfType(MarkdownView);
-		const fileDate = getDateFromFile(activeView.file, "day").format(
+	private async insertEvents(file:TFile) {
+		//debugger;
+		
+		const fileDate = getDateFromFile(file, "day").format(
 			"YYYY-MM-DD"
 		);
+
+		let doc = await file.vault.read(file);
+
+		
 
 		// get the events from the calendars
 		let events : Event[] = (await this.getEvents(fileDate)).map((e) => {
@@ -122,22 +139,32 @@ export default class ICSPlugin extends Plugin {
 				summary: "END",
 				eType: "ICS-END" as const,
 			}
-		] : [value]});
+		] : [value]})
+		.filter((e)=>{
+			return !this.settings.ignoreEvents.contains(e.summary.trim());
+		});
 
-		let existing = this.findExistingEvents(activeView, fileDate);
+		let existing = await this.findExistingEvents(file, fileDate);
 		let offset = 0;
 		for (const event of existing) {
 			if (event.eType == "EXISTING" && event.isIcs) {
+				doc = replaceRange(doc,
+					event.posStart + offset,
+					event.posEnd + offset,
+					""
+				);
+				/*
 				activeView.editor.replaceRange(
 					"",
 					activeView.editor.offsetToPos(event.posStart + offset),
 					activeView.editor.offsetToPos(event.posEnd + offset)
 				);
+				*/
 				offset -= event.posEnd - event.posStart;
 			}
 		}
 
-		existing = this.findExistingEvents(activeView, fileDate);
+		existing = await this.findExistingEvents(file, fileDate);
 
 		let allEvents: Event[] = Array.from(events).concat(existing);
 		allEvents.sort((a: { start: Moment }, b: { start: Moment }) =>
@@ -150,8 +177,6 @@ export default class ICSPlugin extends Plugin {
 			return astart.isSame(bstart) && isEqual(arest,brest);
 		});
 
-		//debugger;
-
 		let insertedCount = 0;
 		let insertPoint = existing[0].posStart;
 		for (const e of allEvents) {
@@ -161,19 +186,32 @@ export default class ICSPlugin extends Plugin {
 				continue;
 			}
 			const eventText = this.printEvent(e);
+
+			doc = insertRange(
+				doc,
+				insertPoint + insertedCount,
+				eventText + "\n",
+			);
+
+			/*
 			activeView.editor.replaceRange(
 				eventText + "\n",
 				activeView.editor.offsetToPos(insertPoint + insertedCount)
 			);
-
+			*/
 			insertedCount += eventText.length + 1;
 		}
+
+		// debugger;
+		await this.app.vault.modify(file,doc);
 	}
 
-	private findExistingEvents(activeView: MarkdownView, fileDate: string) {
+	private async findExistingEvents(activeView: TFile, fileDate: string) {
 		const existing = [];
 
-		const doc = activeView.editor.getValue();
+		const doc = await activeView.vault.read(activeView);
+
+		// const doc = activeView.editor.getValue();
 
 		let match: RegExpExecArray;
 		while ((match = this.eventRegex.exec(doc))) {
@@ -220,3 +258,4 @@ export default class ICSPlugin extends Plugin {
 		await this.saveData(this.settings);
 	}
 }
+

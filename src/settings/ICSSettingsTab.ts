@@ -8,6 +8,7 @@ import {
 	TextComponent,
 	MarkdownRenderer,
 	ToggleComponent,
+	TextAreaComponent,
 } from "obsidian";
 
 import {
@@ -154,10 +155,22 @@ export default class ICSSettingsTab extends PluginSettingTab {
 		new Setting(calendarContainer)
 		.setName("Add end tags")
 		.addToggle((toggle:ToggleComponent)=>{
+			toggle.setValue(this.plugin.settings.addEnd)
 			toggle.onChange((value)=>{
 				this.plugin.settings.addEnd = value;
 				this.plugin.saveSettings();
 			})
+		});
+
+		new Setting(calendarContainer)
+		.setName("Ignore events")
+		.addTextArea((textArea: TextAreaComponent)=>{
+			textArea.setValue(this.plugin.settings.ignoreEvents.join(','))
+			textArea.onChange((value)=>{
+				this.plugin.settings.ignoreEvents = value.split(',').map((a)=>a.trim());
+				this.plugin.saveSettings();
+			});
+			
 		});
 	}
 }
