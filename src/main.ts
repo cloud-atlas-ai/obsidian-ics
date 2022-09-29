@@ -35,19 +35,20 @@ type Event =
 	};
 
 function replaceRange(s, start, end, substitute) {
-	return s.substring(0, start) + substitute + s.substring(end);
+	return s.substring(0, start+1) + substitute + s.substring(end);
 }
 
 function insertRange(s, start, substitute) {
-	return s.substring(0, start) + substitute + s.substring(start+1);
+	return s.substring(0, start+1) + substitute + s.substring(start+1);
 }
 
 export default class ICSPlugin extends Plugin {
 	settings: ICSSettings;
 	//api: IcsAPI;
 
+	// https://regex101.com/r/x6Xry1/4
 	private readonly eventRegex =
-		/- (\[[ x]\]) (?<time>[\d:]+) (\[\w+\])?(\(.*? \| (?<ics>ics:.*?)\) )?(?<links>\[\w+\]\(.+?\) )*(?<text>.*)/gm;
+	/- (\[[ x]\]) (?<time>[\d:]+) (\((?<ics>ics:.*?(\[\]\((?<id>.+?)\))?)\) )?(?<links>\[\w+\]\(.+?\) )*(?<text>.*)/gm
 
 	async addCalendar(calendar: Calendar): Promise<void> {
 		this.settings.calendars = {
@@ -116,9 +117,9 @@ export default class ICSPlugin extends Plugin {
 			"YYYY-MM-DD"
 		);
 
-		let doc = await file.vault.read(file);
+		await file.vault.read(file);
 
-		
+		let doc = await file.vault.read(file);
 
 		// get the events from the calendars
 		let events : Event[] = (await this.getEvents(fileDate)).map((e) => {
@@ -132,57 +133,61 @@ export default class ICSPlugin extends Plugin {
 				eType: "ICS" as const,
 				...rest,
 			};
-		}).flatMap((value)=>{return this.settings.addEnd ? [
+		})
+		.filter((e)=>{
+			return !this.settings.ignoreEvents.contains(e.summary.trim());
+		})
+		.flatMap((value)=>{return this.settings.addEnd ? [
 			value,
 			{
 				start: value.end,
-				summary: "END",
+				summary: "BREAK",
 				eType: "ICS-END" as const,
 			}
 		] : [value]})
-		.filter((e)=>{
-			return !this.settings.ignoreEvents.contains(e.summary.trim());
-		});
+		;
 
-		let existing = await this.findExistingEvents(file, fileDate);
+
+		let existing = await this.findExistingEvents(doc, fileDate);
 		let offset = 0;
 		for (const event of existing) {
 			if (event.eType == "EXISTING" && event.isIcs) {
 				doc = replaceRange(doc,
-					event.posStart + offset,
+					event.posStart + offset-1,
 					event.posEnd + offset,
 					""
 				);
-				/*
-				activeView.editor.replaceRange(
-					"",
-					activeView.editor.offsetToPos(event.posStart + offset),
-					activeView.editor.offsetToPos(event.posEnd + offset)
-				);
-				*/
 				offset -= event.posEnd - event.posStart;
 			}
 		}
 
-		existing = await this.findExistingEvents(file, fileDate);
+		existing = await this.findExistingEvents(doc, fileDate);
 
 		let allEvents: Event[] = Array.from(events).concat(existing);
 		allEvents.sort((a: { start: Moment }, b: { start: Moment }) =>
 			a.start.diff(b.start)
 		);
+
 		allEvents = uniqWith(allEvents, (a:Event,b:Event)=>{
 			const { start:astart, ...arest } = a;
 			const { start:bstart, ...brest } = b;
 
 			return astart.isSame(bstart) && isEqual(arest,brest);
+		})
+		.filter((value, i, array)=>{
+			debugger;
+			if(array.length <= i+1) 
+				return true;
+			return array[i+1].summary != value.summary;
 		});
 
 		let insertedCount = 0;
-		let insertPoint = existing[0].posStart;
+		let insertPoint = existing[0].posStart-1;
+		debugger;
 		for (const e of allEvents) {
 			console.log(e);
 			if (e.eType == "EXISTING") {
-				insertPoint = e.posEnd;
+				insertPoint = e.posEnd-1;
 				continue;
 			}
 			const eventText = this.printEvent(e);
@@ -193,25 +198,15 @@ export default class ICSPlugin extends Plugin {
 				eventText + "\n",
 			);
 
-			/*
-			activeView.editor.replaceRange(
-				eventText + "\n",
-				activeView.editor.offsetToPos(insertPoint + insertedCount)
-			);
-			*/
-			insertedCount += eventText.length + 1;
+			insertedCount += eventText.length+1;
 		}
 
-		// debugger;
+		
 		await this.app.vault.modify(file,doc);
 	}
 
-	private async findExistingEvents(activeView: TFile, fileDate: string) {
+	private async findExistingEvents(doc: string, fileDate: string) {
 		const existing = [];
-
-		const doc = await activeView.vault.read(activeView);
-
-		// const doc = activeView.editor.getValue();
 
 		let match: RegExpExecArray;
 		while ((match = this.eventRegex.exec(doc))) {
@@ -239,10 +234,10 @@ export default class ICSPlugin extends Plugin {
 		}
 
 		if(e.eType == "ICS"){
-			return `- [ ] ${e.start.format("HH:mm")} [link](${e.url} | ics:${e.uid}) ${meeting} ${e.summary} ${e.location}`.trim();
+			return `- [ ] ${e.start.format("HH:mm")} (ics:: ${e.icsName}) [link](${e.url}) ${meeting} ${e.summary} ${e.location}`.trim();
 		}
 		else if(e.eType == "ICS-END"){
-			return `- [ ] ${e.start.format("HH:mm")} [link](asd | ics:asd) ${e.summary}`.trim();
+			return `- [ ] ${e.start.format("HH:mm")} (ics:: ) ${e.summary}`.trim();
 		}
 	}
 
