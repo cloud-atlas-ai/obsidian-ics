@@ -1,5 +1,6 @@
 export interface ICSSettings {
     calendars: Record < string, Calendar > ;
+    addEnd: boolean
 }
 
 export interface Calendar {
@@ -9,5 +10,6 @@ export interface Calendar {
 
 export const DEFAULT_SETTINGS: ICSSettings = {
     calendars: {
-    }
+    },
+    addEnd: false,
 };

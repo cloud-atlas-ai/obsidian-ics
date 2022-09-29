@@ -7,6 +7,7 @@ import {
 	Modal,
 	TextComponent,
 	MarkdownRenderer,
+	ToggleComponent,
 } from "obsidian";
 
 import {
@@ -102,8 +103,8 @@ export default class ICSSettingsTab extends PluginSettingTab {
 		});
 
 		const additional = calendarContainer.createDiv("calendar");
-		for (let a in this.plugin.data.calendars) {
-			const calendar = this.plugin.data.calendars[a];
+		for (let a in this.plugin.settings.calendars) {
+			const calendar = this.plugin.settings.calendars[a];
 
 			let setting = new Setting(additional);
 
@@ -143,6 +144,21 @@ export default class ICSSettingsTab extends PluginSettingTab {
 						});
 				});
 		}
+
+		
+
+		new Setting(calendarContainer)
+		.setHeading()
+		.setName("Settings");
+
+		new Setting(calendarContainer)
+		.setName("Add end tags")
+		.addToggle((toggle:ToggleComponent)=>{
+			toggle.onChange((value)=>{
+				this.plugin.settings.addEnd = value;
+				this.plugin.saveSettings();
+			})
+		});
 	}
 }
 
