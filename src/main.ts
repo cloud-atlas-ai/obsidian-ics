@@ -111,7 +111,6 @@ export default class ICSPlugin extends Plugin {
 	}
 
 	private async insertEvents(file:TFile) {
-		//debugger;
 		
 		const fileDate = getDateFromFile(file, "day").format(
 			"YYYY-MM-DD"
@@ -175,7 +174,6 @@ export default class ICSPlugin extends Plugin {
 			return astart.isSame(bstart) && isEqual(arest,brest);
 		})
 		.filter((value, i, array)=>{
-			debugger;
 			if(array.length <= i+1) 
 				return true;
 			return array[i+1].summary != value.summary;
@@ -183,7 +181,6 @@ export default class ICSPlugin extends Plugin {
 
 		let insertedCount = 0;
 		let insertPoint = existing[0].posStart-1;
-		debugger;
 		for (const e of allEvents) {
 			console.log(e);
 			if (e.eType == "EXISTING") {
