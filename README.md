@@ -37,5 +37,6 @@ If you want to support my work, you can [buy me a coffee](https://www.buymeacoff
 
 - [DST fix](https://github.com/muness/obsidian-ics/pull/17) from @zakkolar
 - [Readme improvements and release script cleanup](https://github.com/muness/obsidian-ics/pull/22) from @fcwheat
+- [Export event getter function](https://github.com/muness/obsidian-ics/pull/33) @bvolkmer
 
 
