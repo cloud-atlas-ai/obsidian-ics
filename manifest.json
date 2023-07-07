@@ -1,10 +1,10 @@
 {
-  "id": "obsidian-ics",
-  "name": "ICS",
-  "version": "0.9.12",
-  "minAppVersion": "0.14.8",
-  "description": "This is a ICS plugin for Obsidian.",
-  "author": "Muness Castle",
-  "authorUrl": "https://github.com/muness",
-  "isDesktopOnly": true
+	"id": "obsidian-ics",
+	"name": "ICS",
+	"version": "0.9.13",
+	"minAppVersion": "0.15.0",
+	"description": "This is a ICS plugin for Obsidian.",
+	"author": "Muness Castle",
+	"authorUrl": "https://github.com/muness",
+	"isDesktopOnly": true
 }
