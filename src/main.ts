@@ -90,7 +90,7 @@ export default class ICSPlugin extends Plugin {
         var mdArray: string [] = [];
 
         events.forEach((e) => {
-			mdArray.push((`- [ ] ${e.time} ${e.icsName} ${e.summary}` + (e.location ? ` ${e.location}` : '')).trim());
+			mdArray.push( (`- [ ] ${e.time} ${e.icsName} ${e.summary} ${(e.location ? e.location : '')}`).trim() );
         });
 				activeView.editor.replaceRange(mdArray.sort().join("\n"), activeView.editor.getCursor());
 			}
