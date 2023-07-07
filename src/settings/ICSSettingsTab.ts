@@ -242,7 +242,7 @@ class SettingsModal extends Modal {
 				});
 			}
 			mDiv.innerText = message;
-			mDiv.insertAfter(textInput.inputEl);
+			mDiv.insertAfter(textInput.inputEl, null);
 		}
 	}
 	static removeValidationError(textInput: TextComponent) {
