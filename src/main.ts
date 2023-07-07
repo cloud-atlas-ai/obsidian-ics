@@ -50,17 +50,24 @@ export default class ICSPlugin extends Plugin {
       var icsArray = parseIcs(await request({
         url: calendarSetting.icsUrl
       }));
-      const todayEvents = filterMatchingEvents(icsArray, date);
-      console.log(todayEvents);
+      const dateEvents = filterMatchingEvents(icsArray, date);
+      console.log(dateEvents);
 
-      todayEvents.forEach((e) => {
-        events.push(
-          { 'time': moment(e.start).format("HH:mm"),
-            'icsName': calendarSetting.icsName,
-            'summary': e.summary,
-            'description': e.description,
-            'location': e.location
-      });});
+      dateEvents.forEach((e) => {
+		let event = {
+			'time': moment(e.start).format("HH:mm"),
+			'icsName': calendarSetting.icsName,
+			'summary': e.summary,
+			'description': e.description
+		}
+	
+		if (e.location) {
+			event['location'] = e.location;
+		}
+	
+		events.push(event);
+	});
+	
     }
     return events;
   }
@@ -83,7 +90,7 @@ export default class ICSPlugin extends Plugin {
         var mdArray: string [] = [];
 
         events.forEach((e) => {
-          mdArray.push(`- [ ] ${e.time} ${e.icsName} ${e.summary} ${e.location}`.trim())
+			mdArray.push(`- [ ] ${e.time} ${e.icsName} ${e.summary}` + (e.location ? ` ${e.location}` : '').trim());
         });
 				activeView.editor.replaceRange(mdArray.sort().join("\n"), activeView.editor.getCursor());
 			}
