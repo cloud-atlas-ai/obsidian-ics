@@ -52,7 +52,7 @@ then
 
     git add -A .
     git commit -m"Update to version ${NEW_VERSION}"
-    git tag "${NEW_VERSION}"
+    git tag "v${NEW_VERSION}"
     git push
     git push --tags
   fi
