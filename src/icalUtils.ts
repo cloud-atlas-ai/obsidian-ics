@@ -1,5 +1,5 @@
 const ical = require('node-ical');
-const moment = require('moment');
+import { tz } from 'moment-timezone';
 
 export function filterMatchingEvents(icsArray: any[], dayToMatch: string) {
 	var matchingEvents = [];
@@ -7,7 +7,7 @@ export function filterMatchingEvents(icsArray: any[], dayToMatch: string) {
 
 	// find non-recurring events on the day
 	icsArray.map((e) => {
-		if (moment(e.start).isSame(dayToMatch, "day")) {
+		if (window.moment(e.start).isSame(dayToMatch, "day")) {
 			matchingEvents.push(e);
 		}
 	});
@@ -17,16 +17,16 @@ export function filterMatchingEvents(icsArray: any[], dayToMatch: string) {
 function findRecurringEvents(icsArray: any[], dayToMatch: string) {
 	var matchingRecurringEvents: any[] = [];
 
-	const rangeStart = moment(dayToMatch);
-	const rangeEnd = moment(dayToMatch).add(1439, 'minutes');
+	const rangeStart = window.moment(dayToMatch);
+	const rangeEnd = window.moment(dayToMatch).add(1439, 'minutes');
 	for (const k in icsArray) {
 		const event = icsArray[k];
 		const title = event.summary;
 
 		// When dealing with calendar recurrences, you need a range of dates to query against,
 		// because otherwise you can get an infinite number of calendar events.
-		let startDate = moment(event.start);
-		let endDate = moment(event.end);
+		let startDate = window.moment(event.start);
+		let endDate = window.moment(event.end);
 
 		// Calculate the duration of the event for use with recurring events.
 		const duration = Number.parseInt(endDate.format('x'), 10) - Number.parseInt(startDate.format('x'), 10);
@@ -46,7 +46,7 @@ function findRecurringEvents(icsArray: any[], dayToMatch: string) {
 				let includeRecurrence = true;
 				let curDuration = duration;
 
-				let startDate = moment(date);
+				let startDate = window.moment(date);
 
 				// Use just the date of the recurrence to look up overrides and exceptions (i.e. chop off time information)
 				const dateLookupKey = date.toISOString().slice(0, 10);
@@ -56,8 +56,8 @@ function findRecurringEvents(icsArray: any[], dayToMatch: string) {
 				if (curEvent.recurrences !== undefined && curEvent.recurrences[dateLookupKey] !== undefined) {
 					// We found an override, so for this recurrence, use a potentially different title, start date, and duration.
 					curEvent = curEvent.recurrences[dateLookupKey];
-					startDate = moment(curEvent.start);
-					curDuration = Number.parseInt(moment(curEvent.end).format('x'), 10) - Number.parseInt(startDate.format('x'), 10);
+					startDate = window.moment(curEvent.start);
+					curDuration = Number.parseInt(window.moment(curEvent.end).format('x'), 10) - Number.parseInt(startDate.format('x'), 10);
           overriden = 'overridden ';
 				} else if (curEvent.exdate !== undefined && curEvent.exdate[dateLookupKey] !== undefined) {
 					// If there's no recurrence override, check for an exception date.  Exception dates represent exceptions to the rule.
@@ -73,18 +73,18 @@ function findRecurringEvents(icsArray: any[], dayToMatch: string) {
 
           if (event.rrule.origOptions.tzid) {
             // tzid present on the rrule
-						const eventTimeZone = moment.tz.zone(event.rrule.origOptions.tzid);
-						const localTimeZone = moment.tz.zone(moment.tz.guess());
+						const eventTimeZone = tz.zone(event.rrule.origOptions.tzid);
+						const localTimeZone = tz.zone(tz.guess());
             const offset = localTimeZone.utcOffset(date) - eventTimeZone.utcOffset(date);
-            startDate = moment(date).add(offset, 'minutes').toDate();
+            startDate = window.moment(date).add(offset, 'minutes');
 					} else {
 							// tzid not present on rrule (calculate offset from original start)
-							startDate = new Date(date.setHours(date.getHours() - ((event.start.getTimezoneOffset() - date.getTimezoneOffset()) / 60)));
+							startDate = window.moment(new Date(date.setHours(date.getHours() - ((event.start.getTimezoneOffset() - date.getTimezoneOffset()) / 60))));
 					}
 				  // Set the the end date from the regular event or the recurrence override.
-					let endDate = moment(Number.parseInt(moment(startDate).format('x'), 10) + curDuration, 'x');
+					let endDate = window.moment(Number.parseInt(window.moment(startDate).format('x'), 10) + curDuration, 'x');
 
-					matchingRecurringEvents.push(cloneRecurringEvent(curEvent, moment(startDate), endDate));
+					matchingRecurringEvents.push(cloneRecurringEvent(curEvent, startDate, endDate));
 				}
 			}
 		}
