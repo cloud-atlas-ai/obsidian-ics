@@ -19,8 +19,7 @@ function findRecurringEvents(icsArray: any[], dayToMatch: string) {
 
 	const rangeStart = window.moment(dayToMatch);
 	const rangeEnd = window.moment(dayToMatch).add(1439, 'minutes');
-	for (const k in icsArray) {
-		const event = icsArray[k];
+	icsArray.forEach(event => {
 		const title = event.summary;
 
 		// When dealing with calendar recurrences, you need a range of dates to query against,
@@ -51,14 +50,14 @@ function findRecurringEvents(icsArray: any[], dayToMatch: string) {
 				// Use just the date of the recurrence to look up overrides and exceptions (i.e. chop off time information)
 				const dateLookupKey = date.toISOString().slice(0, 10);
 
-        let overriden = '';
+				let overriden = '';
 				// For each date that we're checking, it's possible that there is a recurrence override for that one day.
 				if (curEvent.recurrences !== undefined && curEvent.recurrences[dateLookupKey] !== undefined) {
 					// We found an override, so for this recurrence, use a potentially different title, start date, and duration.
 					curEvent = curEvent.recurrences[dateLookupKey];
 					startDate = window.moment(curEvent.start);
 					curDuration = Number.parseInt(window.moment(curEvent.end).format('x'), 10) - Number.parseInt(startDate.format('x'), 10);
-          overriden = 'overridden ';
+					overriden = 'overridden ';
 				} else if (curEvent.exdate !== undefined && curEvent.exdate[dateLookupKey] !== undefined) {
 					// If there's no recurrence override, check for an exception date.  Exception dates represent exceptions to the rule.
 					// This date is an exception date, which means we should skip it in the recurrence pattern.
@@ -71,24 +70,25 @@ function findRecurringEvents(icsArray: any[], dayToMatch: string) {
 
 				if (includeRecurrence === true) {
 
-          if (event.rrule.origOptions.tzid) {
-            // tzid present on the rrule
+					if (event.rrule.origOptions.tzid) {
+						// tzid present on the rrule
 						const eventTimeZone = tz.zone(event.rrule.origOptions.tzid);
 						const localTimeZone = tz.zone(tz.guess());
-            const offset = localTimeZone.utcOffset(date) - eventTimeZone.utcOffset(date);
-            startDate = window.moment(date).add(offset, 'minutes');
+						const offset = localTimeZone.utcOffset(date) - eventTimeZone.utcOffset(date);
+						startDate = window.moment(date).add(offset, 'minutes');
 					} else {
-							// tzid not present on rrule (calculate offset from original start)
-							startDate = window.moment(new Date(date.setHours(date.getHours() - ((event.start.getTimezoneOffset() - date.getTimezoneOffset()) / 60))));
+						// tzid not present on rrule (calculate offset from original start)
+						startDate = window.moment(new Date(date.setHours(date.getHours() - ((event.start.getTimezoneOffset() - date.getTimezoneOffset()) / 60))));
 					}
-				  // Set the the end date from the regular event or the recurrence override.
+					// Set the the end date from the regular event or the recurrence override.
 					let endDate = window.moment(Number.parseInt(window.moment(startDate).format('x'), 10) + curDuration, 'x');
 
 					matchingRecurringEvents.push(cloneRecurringEvent(curEvent, startDate, endDate));
 				}
 			}
 		}
-	}
+	});
+
 	return matchingRecurringEvents;
 
 	function cloneRecurringEvent(curEvent: any, startDate: any, endDate: any) {
