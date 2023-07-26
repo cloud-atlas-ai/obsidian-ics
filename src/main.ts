@@ -1,5 +1,5 @@
 import {
-	MarkdownView
+	MarkdownView, Notice
 } from 'obsidian';
 
 import {
@@ -51,7 +51,8 @@ export default class ICSPlugin extends Plugin {
 				}));
 
 			} catch (error) {
-				console.error('error retrieving calendar + ' + calendarSetting.icsName + ' with ics URL ' + calendarSetting.icsUrl + ' : ' + error);
+				console.error('error retrieving calendar ' + calendarSetting.icsName + ' with ics URL ' + calendarSetting.icsUrl + ' : ' + error);
+				new Notice(`Error retrieving calendar with name "${calendarSetting.icsName}". See console for details.`);
 			}
 
 			const dateEvents = filterMatchingEvents(icsArray, date);
