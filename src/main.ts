@@ -51,7 +51,7 @@ export default class ICSPlugin extends Plugin {
 				}));
 
 			} catch (error) {
-				console.error('error retrieving ics file at ' + calendarSetting.icsUrl + ' : ' + error);
+				console.error('error retrieving calendar + ' + calendarSetting.icsName + ' with ics URL ' + calendarSetting.icsUrl + ' : ' + error);
 			}
 
 			const dateEvents = filterMatchingEvents(icsArray, date);
