@@ -14,41 +14,16 @@ import {
 } from "./ICSSettings";
 
 export function getCalendarElement(
-	icsName: string,
-	icsUrl: string,
-): HTMLElement {
+	icsName: string): HTMLElement {
 	let calendarElement, titleEl;
+
 	calendarElement = createDiv({
 		cls: `calendar calendar-${icsName}`,
 	});
 	titleEl = calendarElement.createEl("summary", {
-		cls: `calendar-name ${icsName}`
+		cls: `calendar-name ${icsName}`,
+		text: icsName
 	});
-
-	//get markdown
-	const markdownHolder = createDiv();
-	MarkdownRenderer.renderMarkdown(icsName, markdownHolder, "", null);
-
-	const calendarTitleContent = createDiv();
-	markdownHolder.children[0]?.tagName === "P" ?
-	createDiv() :
-	markdownHolder.children[0];
-
-	//get children of markdown element, then remove them
-	const markdownElements = Array.from(
-		markdownHolder.children[0]?.childNodes || []
-	);
-	calendarTitleContent.innerHTML = "";
-	calendarTitleContent.addClass("calendar-title-content");
-
-	//add markdown children back
-	const calendarTitleMarkdown = calendarTitleContent.createDiv(
-		"calendar-title-markdown"
-	);
-	for (let i = 0; i < markdownElements.length; i++) {
-		calendarTitleMarkdown.appendChild(markdownElements[i]);
-	}
-	titleEl.appendChild(calendarTitleContent || createDiv());
 
 	return calendarElement;
 }
@@ -61,7 +36,7 @@ export default class ICSSettingsTab extends PluginSettingTab {
 		this.plugin = plugin;
 	}
 
-	async display(): Promise < void > {
+	display(): void {
 		let {
 			containerEl
 		} = this;
@@ -76,30 +51,30 @@ export default class ICSSettingsTab extends PluginSettingTab {
 			"ics-setting-calendar"
 		);
 		new Setting(calendarContainer)
-		.setName("Add New")
-		.setDesc("Add a new Calendar.")
-		.addButton((button: ButtonComponent): ButtonComponent => {
-			let b = button
-				.setTooltip("Add Additional")
-				.setButtonText("+")
-				.onClick(async () => {
-					let modal = new SettingsModal(this.app);
+			.setName("Add New")
+			.setDesc("Add a new Calendar.")
+			.addButton((button: ButtonComponent): ButtonComponent => {
+				let b = button
+					.setTooltip("Add Additional")
+					.setButtonText("+")
+					.onClick(async () => {
+						let modal = new SettingsModal(this.app);
 
-					modal.onClose = async () => {
-						if (modal.saved) {
-							this.plugin.addCalendar({
-								icsName: modal.icsName,
-								icsUrl: modal.icsUrl
-							});
-							this.display();
-						}
-					};
+						modal.onClose = async () => {
+							if (modal.saved) {
+								this.plugin.addCalendar({
+									icsName: modal.icsName,
+									icsUrl: modal.icsUrl
+								});
+								this.display();
+							}
+						};
 
-					modal.open();
-				});
+						modal.open();
+					});
 
-			return b;
-		});
+				return b;
+			});
 
 		const additional = calendarContainer.createDiv("calendar");
 		for (let a in this.plugin.data.calendars) {
@@ -107,10 +82,8 @@ export default class ICSSettingsTab extends PluginSettingTab {
 
 			let setting = new Setting(additional);
 
-			let calEl = await getCalendarElement(
-				calendar.icsName,
-				calendar.icsUrl
-			);
+			let calEl = getCalendarElement(
+				calendar.icsName);
 			setting.infoEl.replaceWith(calEl);
 
 			setting
@@ -152,7 +125,7 @@ class SettingsModal extends Modal {
 
 	saved: boolean = false;
 	error: boolean = false;
-	constructor(app: App, setting ? : Calendar) {
+	constructor(app: App, setting?: Calendar) {
 		super(app);
 		if (setting) {
 			this.icsName = setting.icsName;
@@ -160,7 +133,7 @@ class SettingsModal extends Modal {
 		}
 	}
 
-	async display() {
+	display() {
 		let {
 			contentEl
 		} = this;
@@ -169,12 +142,6 @@ class SettingsModal extends Modal {
 
 		const settingDiv = contentEl.createDiv();
 
-		let calendarPreview = await getCalendarElement(
-			this.icsName,
-			this.icsUrl,
-		);
-
-		contentEl.appendChild(calendarPreview);
 		let nameText: TextComponent;
 		const nameSetting = new Setting(settingDiv)
 			.setName("Calendar Name")
@@ -222,7 +189,7 @@ class SettingsModal extends Modal {
 		this.display();
 	}
 
-	static setValidationError(textInput: TextComponent, message ? : string) {
+	static setValidationError(textInput: TextComponent, message?: string) {
 		textInput.inputEl.addClass("is-invalid");
 		if (message) {
 			textInput.inputEl.parentElement.addClasses([
