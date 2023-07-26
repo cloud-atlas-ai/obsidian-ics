@@ -44,9 +44,16 @@ export default class ICSPlugin extends Plugin {
 		for (const calendar in this.data.calendars) {
 			const calendarSetting = this.data.calendars[calendar];
 			var icsArray: any[] = [];
-			var icsArray = parseIcs(await request({
-				url: calendarSetting.icsUrl
-			}));
+
+			try {
+				var icsArray = parseIcs(await request({
+					url: calendarSetting.icsUrl
+				}));
+
+			} catch (error) {
+				console.error('error retrieving ics file at ' + calendarSetting.icsUrl + ' : ' + error);
+			}
+
 			const dateEvents = filterMatchingEvents(icsArray, date);
 
 			dateEvents.forEach((e) => {
