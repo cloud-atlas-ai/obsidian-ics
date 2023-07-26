@@ -1,5 +1,5 @@
 import {
-	MarkdownView
+	MarkdownView, Notice
 } from 'obsidian';
 
 import {
@@ -20,85 +20,84 @@ import {
 } from 'obsidian';
 import { parseIcs, filterMatchingEvents } from './icalUtils';
 
-const moment = require('moment');
-
 export default class ICSPlugin extends Plugin {
 	data: ICSSettings;
 
 	async addCalendar(calendar: Calendar): Promise<void> {
-        this.data.calendars = {
-            ...this.data.calendars,
-			[calendar.icsName]: calendar 
-        };
-        await this.saveSettings();
-    }
+		this.data.calendars = {
+			...this.data.calendars,
+			[calendar.icsName]: calendar
+		};
+		await this.saveSettings();
+	}
 
 	async removeCalendar(calendar: Calendar) {
-        if (this.data.calendars[calendar.icsName]) {
-            delete this.data.calendars[calendar.icsName];
-        }
-        await this.saveSettings();
-    }
-
-  async getEvents(date: string) {
-    var events: any[] = [];
-
-    for (const calendar in this.data.calendars) {
-      const calendarSetting = this.data.calendars[calendar];
-      console.log(calendarSetting);
-      var icsArray: any[] = [];
-      var icsArray = parseIcs(await request({
-        url: calendarSetting.icsUrl
-      }));
-      const dateEvents = filterMatchingEvents(icsArray, date);
-      console.log(dateEvents);
-
-      dateEvents.forEach((e) => {
-		let event = {
-			'time': moment(e.start).format("HH:mm"),
-			'icsName': calendarSetting.icsName,
-			'summary': e.summary,
-			'description': e.description
+		if (this.data.calendars[calendar.icsName]) {
+			delete this.data.calendars[calendar.icsName];
 		}
-	
-		if (e.location) {
-			event['location'] = e.location;
+		await this.saveSettings();
+	}
+
+	async getEvents(date: string) {
+		var events: any[] = [];
+
+		for (const calendar in this.data.calendars) {
+			const calendarSetting = this.data.calendars[calendar];
+			var icsArray: any[] = [];
+
+			try {
+				var icsArray = parseIcs(await request({
+					url: calendarSetting.icsUrl
+				}));
+
+			} catch (error) {
+				console.error('error retrieving calendar ' + calendarSetting.icsName + ' with ics URL ' + calendarSetting.icsUrl + ' : ' + error);
+				new Notice(`Error retrieving calendar with name "${calendarSetting.icsName}". See console for details.`);
+			}
+
+			const dateEvents = filterMatchingEvents(icsArray, date);
+
+			dateEvents.forEach((e) => {
+				let event = {
+					'time': window.moment(e.start).format("HH:mm"),
+					'icsName': calendarSetting.icsName,
+					'summary': e.summary,
+					'description': e.description
+				}
+
+				if (e.location) {
+					event['location'] = e.location;
+				}
+
+				events.push(event);
+			});
+
 		}
-	
-		events.push(event);
-	});
-	
-    }
-    return events;
-  }
+		return events;
+	}
 
 	async onload() {
-		console.log('loading ics plugin');
 		await this.loadSettings();
 		this.addSettingTab(new ICSSettingsTab(this.app, this));
 		this.addCommand({
 			id: "import_events",
 			name: "import events",
-			hotkeys: [{
-				modifiers: ["Alt", "Shift"],
-				key: 'T',
-			}, ],
 			callback: async () => {
 				const activeView = this.app.workspace.getActiveViewOfType(MarkdownView);
 				const fileDate = getDateFromFile(activeView.file, "day").format("YYYY-MM-DD");
-        var events: any[] = await this.getEvents(fileDate);
-        var mdArray: string [] = [];
+				var events: any[] = await this.getEvents(fileDate);
+				var mdArray: string[] = [];
 
-        events.forEach((e) => {
-			mdArray.push( (`- [ ] ${e.time} ${e.icsName} ${e.summary} ${(e.location ? e.location : '')}`).trim() );
-        });
+				events.forEach((e) => {
+					mdArray.push((`- [ ] ${e.time} ${e.icsName} ${e.summary} ${(e.location ? e.location : '')}`).trim());
+				});
 				activeView.editor.replaceRange(mdArray.sort().join("\n"), activeView.editor.getCursor());
 			}
 		});
 	}
 
 	onunload() {
-		console.log('unloading ics plugin');
+		return;
 	}
 
 	async loadSettings() {
