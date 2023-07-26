@@ -1,7 +1,7 @@
 {
   "id": "ics",
   "name": "ICS",
-  "version": "0.9.16",
+  "version": "0.9.17",
   "minAppVersion": "0.15.0",
   "description": "This is a ICS plugin for Obsidian.",
   "author": "Muness Castle",
