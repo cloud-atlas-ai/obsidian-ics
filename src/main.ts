@@ -1,4 +1,5 @@
 import {
+	Editor, moment,
 	MarkdownView, Notice
 } from 'obsidian';
 
@@ -59,7 +60,7 @@ export default class ICSPlugin extends Plugin {
 
 			dateEvents.forEach((e) => {
 				let event = {
-					'time': window.moment(e.start).format("HH:mm"),
+					'time': moment(e.start).format("HH:mm"),
 					'icsName': calendarSetting.icsName,
 					'summary': e.summary,
 					'description': e.description
@@ -82,16 +83,15 @@ export default class ICSPlugin extends Plugin {
 		this.addCommand({
 			id: "import_events",
 			name: "import events",
-			callback: async () => {
-				const activeView = this.app.workspace.getActiveViewOfType(MarkdownView);
-				const fileDate = getDateFromFile(activeView.file, "day").format("YYYY-MM-DD");
+			editorCallback: async (editor: Editor, view: MarkdownView) => {
+				const fileDate = getDateFromFile(view.file, "day").format("YYYY-MM-DD");
 				var events: any[] = await this.getEvents(fileDate);
 				var mdArray: string[] = [];
 
 				events.forEach((e) => {
 					mdArray.push((`- [ ] ${e.time} ${e.icsName} ${e.summary} ${(e.location ? e.location : '')}`).trim());
 				});
-				activeView.editor.replaceRange(mdArray.sort().join("\n"), activeView.editor.getCursor());
+				editor.replaceRange(mdArray.sort().join("\n"), editor.getCursor());
 			}
 		});
 	}

@@ -3,7 +3,7 @@
   "name": "ICS",
   "version": "1.0.0",
   "minAppVersion": "1.3.5",
-  "description": "This is a ICS plugin for Obsidian.",
+  "description": "Parse multiple ICS files to include in your notes. Designed for Daily Notes and the Day Planner format. Through templates you can customize it for other use cases.",
   "author": "Muness Castle",
   "authorUrl": "https://github.com/muness",
   "isDesktopOnly": false
