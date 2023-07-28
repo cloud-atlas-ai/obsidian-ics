@@ -1,5 +1,6 @@
 const ical = require('node-ical');
 import { tz } from 'moment-timezone';
+import { moment } from "obsidian";
 
 export function filterMatchingEvents(icsArray: any[], dayToMatch: string) {
 	var matchingEvents = [];
@@ -7,7 +8,7 @@ export function filterMatchingEvents(icsArray: any[], dayToMatch: string) {
 
 	// find non-recurring events on the day
 	icsArray.map((e) => {
-		if (window.moment(e.start).isSame(dayToMatch, "day")) {
+		if (moment(e.start).isSame(dayToMatch, "day")) {
 			matchingEvents.push(e);
 		}
 	});
@@ -18,8 +19,8 @@ export function filterMatchingEvents(icsArray: any[], dayToMatch: string) {
 function findRecurringEvents(icsArray: any[], dayToMatch: string) {
 	var matchingRecurringEvents: any[] = [];
 
-	const rangeStart = window.moment(dayToMatch);
-	const rangeEnd = window.moment(dayToMatch).add(1439, 'minutes');
+	const rangeStart = moment(dayToMatch);
+	const rangeEnd = moment(dayToMatch).add(1439, 'minutes');
 	icsArray.forEach(origEvent => {
 		// When dealing with calendar recurrences, you need a range of dates to query against,
 		// because otherwise you can get an infinite number of calendar events.
@@ -57,7 +58,7 @@ function findRecurringEvents(icsArray: any[], dayToMatch: string) {
 				}
 
 				//if this is the first instance of the event, we don't want it picked up here
-				if (window.moment(date).isSame(curEvent.start)) {
+				if (moment(date).isSame(curEvent.start)) {
 					skip = true;
 				}
 
@@ -72,7 +73,7 @@ function findRecurringEvents(icsArray: any[], dayToMatch: string) {
 }
 
 function extractDuration(event: any) {
-	return (Number.parseInt(window.moment(event.end).format('x'), 10) - Number.parseInt(window.moment(event.start).format('x'), 10));
+	return (Number.parseInt(moment(event.end).format('x'), 10) - Number.parseInt(moment(event.start).format('x'), 10));
 
 }
 
@@ -82,16 +83,16 @@ function applyTzOffset(origEvent: any, event: any, date: any) {
 		const eventTimeZone = tz.zone(origEvent.rrule.origOptions.tzid);
 		const localTimeZone = tz.zone(tz.guess());
 		const offset = localTimeZone.utcOffset(date) - eventTimeZone.utcOffset(date);
-		return window.moment(date).add(offset, 'minutes');
+		return moment(date).add(offset, 'minutes');
 	} else {
 		// tzid not present on rrule (calculate offset from original start)
-		return window.moment(new Date(date.setHours(date.getHours() - ((event.start.getTimezoneOffset() - date.getTimezoneOffset()) / 60))));
+		return moment(new Date(date.setHours(date.getHours() - ((event.start.getTimezoneOffset() - date.getTimezoneOffset()) / 60))));
 	}
 }
 
 function cloneRecurringEvent(origEvent: any, event: any, date: any, duration: any) {
 	let startDate = applyTzOffset(origEvent, event, date);
-	let endDate = window.moment(Number.parseInt(window.moment(startDate).format('x'), 10) + duration, 'x');
+	let endDate = moment(Number.parseInt(moment(startDate).format('x'), 10) + duration, 'x');
 
 	return {
 		description: event.description,

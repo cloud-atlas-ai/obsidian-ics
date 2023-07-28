@@ -1,5 +1,5 @@
 import {
-	Editor,
+	Editor, moment,
 	MarkdownView, Notice
 } from 'obsidian';
 
@@ -60,7 +60,7 @@ export default class ICSPlugin extends Plugin {
 
 			dateEvents.forEach((e) => {
 				let event = {
-					'time': window.moment(e.start).format("HH:mm"),
+					'time': moment(e.start).format("HH:mm"),
 					'icsName': calendarSetting.icsName,
 					'summary': e.summary,
 					'description': e.description
