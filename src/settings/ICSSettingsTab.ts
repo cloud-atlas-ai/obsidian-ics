@@ -42,17 +42,13 @@ export default class ICSSettingsTab extends PluginSettingTab {
 		} = this;
 
 		containerEl.empty();
-		containerEl.addClass("ics-settings")
-		containerEl.createEl("h2", {
-			text: "ICS Settings"
-		});
 
 		const calendarContainer = containerEl.createDiv(
 			"ics-setting-calendar"
 		);
 		new Setting(calendarContainer)
-			.setName("Add New")
-			.setDesc("Add a new Calendar.")
+			.setName("Add new")
+			.setDesc("Add a new calendar")
 			.addButton((button: ButtonComponent): ButtonComponent => {
 				let b = button
 					.setTooltip("Add Additional")
