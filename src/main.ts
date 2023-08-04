@@ -69,7 +69,7 @@ export default class ICSPlugin extends Plugin {
 				if (e.location) {
 					event['location'] = e.location;
 				}
-
+                event['format'] = calendarSetting.format;
 				events.push(event);
 			});
 
@@ -86,11 +86,14 @@ export default class ICSPlugin extends Plugin {
 			editorCallback: async (editor: Editor, view: MarkdownView) => {
 				const fileDate = getDateFromFile(view.file, "day").format("YYYY-MM-DD");
 				var events: any[] = await this.getEvents(fileDate);
-				var mdArray: string[] = [];
-
-				events.forEach((e) => {
-					mdArray.push((`- [ ] ${e.time} ${e.icsName} ${e.summary} ${(e.location ? e.location : '')}`).trim());
-				});
+				const mdArray = events.map(e => {
+                    return [
+                        `- [ ] ${e.time}`,
+                        e.format.icsName ? e.icsName : null,
+                        e.format.summary ? e.summary : null,
+                        e.format.description ? `\n\t${e.description}` : null,
+                    ].filter(Boolean).join(' ')
+				});			
 				editor.replaceRange(mdArray.sort().join("\n"), editor.getCursor());
 			}
 		});
