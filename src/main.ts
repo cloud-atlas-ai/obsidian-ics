@@ -89,9 +89,9 @@ export default class ICSPlugin extends Plugin {
 				const mdArray = events.map(e => {
                     return [
                         `- [ ] ${e.time}`,
-                        e.format.icsName ? e.icsName : null,
-                        e.format.summary ? e.summary : null,
-                        e.format.description ? `\n\t- ${e.description}` : null,
+                        e.format?.icsName ? e.icsName : null,
+                        e.format?.summary ? e.summary : null,
+                        e.format?.description ? `\n\t- ${e.description}` : null,
                     ].filter(Boolean).join(' ')
 				});			
 				editor.replaceRange(mdArray.sort().join("\n"), editor.getCursor());
