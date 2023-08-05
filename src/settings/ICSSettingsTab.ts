@@ -137,7 +137,7 @@ class SettingsModal extends Modal {
 		if (setting) {
 			this.icsName = setting.icsName;
 			this.icsUrl = setting.icsUrl;
-            this.format = setting.format;
+			this.format = setting.format || this.format // if format is undefined, use default
 		}
 	}
 
