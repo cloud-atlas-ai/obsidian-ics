@@ -63,13 +63,13 @@ export default class ICSPlugin extends Plugin {
 					'time': moment(e.start).format("HH:mm"),
 					'icsName': calendarSetting.icsName,
 					'summary': e.summary,
-					'description': e.description
+					'description': e.description,
+                    'format': calendarSetting.format
 				}
 
 				if (e.location) {
 					event['location'] = e.location;
 				}
-                event['format'] = calendarSetting.format;
 				events.push(event);
 			});
 
