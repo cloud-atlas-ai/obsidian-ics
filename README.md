@@ -10,7 +10,9 @@ This works, though I recently fixed some issues with timezone offsets and missin
 
 ## Installation
 
-Manual Installation
+This plugin is in the community plugin browser in Obsidian. Search for ICS and you can install it from there.
+
+### Manual Installation
 
 1. Download the latest `obsidian-ics-[version].zip` file from [releases](https://github.com/muness/obsidian-ics/releases).
 2. Unpack the file. It should create a `obsidian-ics` folder.
@@ -36,3 +38,4 @@ If you want to support my work, you can [buy me a coffee](https://www.buymeacoff
 - [Readme improvements and release script cleanup](https://github.com/muness/obsidian-ics/pull/22) from @fcwheat
 - [Export event getter function](https://github.com/muness/obsidian-ics/pull/33) @bvolkmer
 - [Allow plugin to run on mobile](https://github.com/muness/obsidian-ics/pull/46) @TopherMan
+- [Implement customizable output format for events](https://github.com/muness/obsidian-ics/pull/55) @GoBeromsu
