@@ -60,7 +60,8 @@ export default class ICSSettingsTab extends PluginSettingTab {
 							if (modal.saved) {
 								this.plugin.addCalendar({
 									icsName: modal.icsName,
-									icsUrl: modal.icsUrl
+									icsUrl: modal.icsUrl,
+									format: modal.format
 								});
 								this.display();
 							}
@@ -94,7 +95,8 @@ export default class ICSSettingsTab extends PluginSettingTab {
 									this.plugin.removeCalendar(calendar);
 									this.plugin.addCalendar({
 										icsName: modal.icsName,
-										icsUrl: modal.icsUrl
+										icsUrl: modal.icsUrl,
+										format: modal.format
 									});
 									this.display();
 								}
@@ -121,11 +123,21 @@ class SettingsModal extends Modal {
 
 	saved: boolean = false;
 	error: boolean = false;
+    format: {
+        icsName: boolean,
+        summary: boolean,
+        description: boolean
+    }={
+		icsName: true,
+        summary: true,
+        description: true
+	};
 	constructor(app: App, setting?: Calendar) {
 		super(app);
 		if (setting) {
 			this.icsName = setting.icsName;
 			this.icsUrl = setting.icsUrl;
+			this.format = setting.format || this.format // if format is undefined, use default
 		}
 	}
 
@@ -160,6 +172,32 @@ class SettingsModal extends Modal {
 				});
 			});
 
+        const formatSetting = new Setting(settingDiv)
+            .setName("Output Format");
+
+        const icsNameSetting = new Setting(settingDiv)
+            .setName('icsName')
+            .setDesc('Include the icsName field in the output')
+            .addToggle(toggle => toggle
+                .setValue(this.format.icsName || false)
+                .onChange(value => this.format.icsName = value));
+
+        const summaryName = new Setting(settingDiv)
+            .setName('summary')
+            .setDesc('Include the summary field in the output')
+            .addToggle(toggle => toggle
+                .setValue(this.format.summary || false)
+                .onChange(value => {
+                    this.format.summary = value;
+                    console.log("this.format.summary : ", this.format.summary)
+                }));
+
+        const dscSetting = new Setting(settingDiv)
+            .setName('description')
+            .setDesc('Include the description field in the output')
+            .addToggle(toggle => toggle
+                .setValue(this.format.description || false)
+                .onChange(value => this.format.description = value));
 		let footerEl = contentEl.createDiv();
 		let footerButtons = new Setting(footerEl);
 		footerButtons.addButton((b) => {
