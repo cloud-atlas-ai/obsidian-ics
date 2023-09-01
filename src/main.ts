@@ -64,7 +64,8 @@ export default class ICSPlugin extends Plugin {
 					'icsName': calendarSetting.icsName,
 					'summary': e.summary,
 					'description': e.description,
-                    'format': calendarSetting.format
+                    'format': calendarSetting.format,
+					'location': null,
 				}
 
 				if (e.location) {
@@ -91,6 +92,7 @@ export default class ICSPlugin extends Plugin {
                         `- [ ] ${e.time}`,
                         e.format?.icsName ? e.icsName : null,
                         e.format?.summary ? e.summary : null,
+						e.format?.location ? e.location : null,
                         e.format?.description && e.description ? `\n\t- ${e.description}` : null,
                     ].filter(Boolean).join(' ')
 				});
