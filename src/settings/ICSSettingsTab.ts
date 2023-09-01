@@ -43,6 +43,7 @@ export default class ICSSettingsTab extends PluginSettingTab {
 
 		containerEl.empty();
 
+
 		const calendarContainer = containerEl.createDiv(
 			"ics-setting-calendar"
 		);
@@ -114,6 +115,11 @@ export default class ICSSettingsTab extends PluginSettingTab {
 						});
 				});
 		}
+		// Sponsor link - Thank you!
+		const divSponsor = containerEl.createDiv()
+		divSponsor.innerHTML = `<br/><hr/>A scratch my own itch project by <a href="https://muness.com/" target='_blank'>muness</a>.<br/>
+			<a href='https://www.buymeacoffee.com/muness' target='_blank'><img height="36" src='https://cdn.buymeacoffee.com/uploads/profile_pictures/default/79D6B5/MC.png' border='0' alt='Buy Me a Book' /></a> 
+		`
 	}
 }
 
