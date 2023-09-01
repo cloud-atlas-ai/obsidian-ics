@@ -8,6 +8,7 @@ export interface Calendar {
     format: {
         icsName: boolean;
         summary: boolean;
+        location: boolean;
         description: boolean;
     }
 }

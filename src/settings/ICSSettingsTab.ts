@@ -126,11 +126,13 @@ class SettingsModal extends Modal {
     format: {
         icsName: boolean,
         summary: boolean,
+		location: boolean,
         description: boolean
     }={
 		icsName: true,
-        summary: true,
-        description: true
+		summary: true,
+		location: true,
+		description: false,
 	};
 	constructor(app: App, setting?: Calendar) {
 		super(app);
@@ -175,29 +177,38 @@ class SettingsModal extends Modal {
         const formatSetting = new Setting(settingDiv)
             .setName("Output Format");
 
-        const icsNameSetting = new Setting(settingDiv)
+        const icsNameToggle = new Setting(settingDiv)
             .setName('icsName')
             .setDesc('Include the icsName field in the output')
             .addToggle(toggle => toggle
                 .setValue(this.format.icsName || false)
                 .onChange(value => this.format.icsName = value));
 
-        const summaryName = new Setting(settingDiv)
+        const summaryToggle = new Setting(settingDiv)
             .setName('summary')
             .setDesc('Include the summary field in the output')
             .addToggle(toggle => toggle
-                .setValue(this.format.summary || false)
+                .setValue(this.format.summary || true)
                 .onChange(value => {
                     this.format.summary = value;
-                    console.log("this.format.summary : ", this.format.summary)
                 }));
 
-        const dscSetting = new Setting(settingDiv)
+		const locationToggle = new Setting(settingDiv)
+				.setName('location')
+				.setDesc('Include the location field in the output')
+				.addToggle(toggle => toggle
+					.setValue(this.format.location || false)
+					.onChange(value => {
+						this.format.location = value;
+					}));
+
+        const descriptionToggle = new Setting(settingDiv)
             .setName('description')
             .setDesc('Include the description field in the output')
             .addToggle(toggle => toggle
                 .setValue(this.format.description || false)
                 .onChange(value => this.format.description = value));
+
 		let footerEl = contentEl.createDiv();
 		let footerButtons = new Setting(footerEl);
 		footerButtons.addButton((b) => {
