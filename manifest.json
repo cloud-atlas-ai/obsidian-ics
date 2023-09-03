@@ -6,5 +6,6 @@
   "description": "Parse multiple ICS files to include in your notes. Designed for Daily Notes and the Day Planner format. Through templates you can customize it for other use cases.",
   "author": "Muness Castle",
   "authorUrl": "https://github.com/muness",
+  "fundingUrl": "https://www.buymeacoffee.com/muness",
   "isDesktopOnly": false
 }
