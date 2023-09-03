@@ -6,7 +6,6 @@ import {
 	ButtonComponent,
 	Modal,
 	TextComponent,
-	MarkdownRenderer,
 } from "obsidian";
 
 import {
@@ -43,10 +42,13 @@ export default class ICSSettingsTab extends PluginSettingTab {
 
 		containerEl.empty();
 
-
 		const calendarContainer = containerEl.createDiv(
 			"ics-setting-calendar"
 		);
+
+		const calnedarSetting = new Setting(calendarContainer)
+			.setHeading().setName("Calendars");
+
 		new Setting(calendarContainer)
 			.setName("Add new")
 			.setDesc("Add a new calendar")
@@ -115,10 +117,26 @@ export default class ICSSettingsTab extends PluginSettingTab {
 						});
 				});
 		}
+
+		const formatSetting = new Setting(containerEl)
+			.setHeading().setName("Output Format");
+
+
+		let timeFormat: TextComponent;
+		const timeFormatSetting = new Setting(containerEl)
+			.setName("Time format")
+			.setDesc('HH:mm will display 00:15. hh:mma will display 12:15am.')
+			.addText((text) => {
+				timeFormat = text;
+				timeFormat.setValue(this.plugin.data.format.timeFormat).onChange((v) => {
+					this.plugin.data.format.timeFormat = v;
+				});
+			});
+
 		// Sponsor link - Thank you!
 		const divSponsor = containerEl.createDiv()
 		divSponsor.innerHTML = `<br/><hr/>A scratch my own itch project by <a href="https://muness.com/" target='_blank'>muness</a>.<br/>
-			<a href='https://www.buymeacoffee.com/muness' target='_blank'><img height="36" src='https://cdn.buymeacoffee.com/uploads/profile_pictures/default/79D6B5/MC.png' border='0' alt='Buy Me a Book' /></a> 
+			<a href='https://www.buymeacoffee.com/muness' target='_blank'><img height="36" src='https://cdn.buymeacoffee.com/uploads/profile_pictures/default/79D6B5/MC.png' border='0' alt='Buy Me a Book' /></a>
 		`
 	}
 }
@@ -129,17 +147,19 @@ class SettingsModal extends Modal {
 
 	saved: boolean = false;
 	error: boolean = false;
-    format: {
-        icsName: boolean,
-        summary: boolean,
+	format: {
+		includeEventEndTime: boolean,
+		icsName: boolean,
+		summary: boolean,
 		location: boolean,
-        description: boolean
-    }={
-		icsName: true,
-		summary: true,
-		location: true,
-		description: false,
-	};
+		description: boolean
+	} = {
+			includeEventEndTime: true,
+			icsName: true,
+			summary: true,
+			location: true,
+			description: false,
+		};
 	constructor(app: App, setting?: Calendar) {
 		super(app);
 		if (setting) {
@@ -159,6 +179,10 @@ class SettingsModal extends Modal {
 		const settingDiv = contentEl.createDiv();
 
 		let nameText: TextComponent;
+
+		const calnedarSetting = new Setting(settingDiv)
+			.setHeading().setName("Calendar Settings");
+
 		const nameSetting = new Setting(settingDiv)
 			.setName("Calendar Name")
 
@@ -180,40 +204,47 @@ class SettingsModal extends Modal {
 				});
 			});
 
-        const formatSetting = new Setting(settingDiv)
-            .setName("Output Format");
+		const formatSetting = new Setting(settingDiv)
+			.setHeading().setName("Output Format");
 
-        const icsNameToggle = new Setting(settingDiv)
-            .setName('icsName')
-            .setDesc('Include the icsName field in the output')
-            .addToggle(toggle => toggle
-                .setValue(this.format.icsName || false)
-                .onChange(value => this.format.icsName = value));
+		const endTimeToggle = new Setting(settingDiv)
+			.setName('End time')
+			.setDesc('Include the event\'s end time')
+			.addToggle(toggle => toggle
+				.setValue(this.format.includeEventEndTime || false)
+				.onChange(value => this.format.includeEventEndTime = value));
 
-        const summaryToggle = new Setting(settingDiv)
-            .setName('summary')
-            .setDesc('Include the summary field in the output')
-            .addToggle(toggle => toggle
-                .setValue(this.format.summary || true)
-                .onChange(value => {
-                    this.format.summary = value;
-                }));
+		const icsNameToggle = new Setting(settingDiv)
+			.setName('Calendar name')
+			.setDesc('Include the calendar name')
+			.addToggle(toggle => toggle
+				.setValue(this.format.icsName || false)
+				.onChange(value => this.format.icsName = value));
+
+		const summaryToggle = new Setting(settingDiv)
+			.setName('Summary')
+			.setDesc('Include the summary field')
+			.addToggle(toggle => toggle
+				.setValue(this.format.summary || false)
+				.onChange(value => {
+					this.format.summary = value;
+				}));
 
 		const locationToggle = new Setting(settingDiv)
-				.setName('location')
-				.setDesc('Include the location field in the output')
-				.addToggle(toggle => toggle
-					.setValue(this.format.location || false)
-					.onChange(value => {
-						this.format.location = value;
-					}));
+			.setName('Location')
+			.setDesc('Include the location field')
+			.addToggle(toggle => toggle
+				.setValue(this.format.location || false)
+				.onChange(value => {
+					this.format.location = value;
+				}));
 
-        const descriptionToggle = new Setting(settingDiv)
-            .setName('description')
-            .setDesc('Include the description field in the output')
-            .addToggle(toggle => toggle
-                .setValue(this.format.description || false)
-                .onChange(value => this.format.description = value));
+		const descriptionToggle = new Setting(settingDiv)
+			.setName('Description')
+			.setDesc('Include the description field ')
+			.addToggle(toggle => toggle
+				.setValue(this.format.description || false)
+				.onChange(value => this.format.description = value));
 
 		let footerEl = contentEl.createDiv();
 		let footerButtons = new Setting(footerEl);
@@ -227,8 +258,8 @@ class SettingsModal extends Modal {
 			return b;
 		});
 		footerButtons.addExtraButton((b) => {
-			b.setIcon("cross")
-				.setTooltip("Cancel")
+			b.setTooltip("Cancel")
+				.setIcon("cross")
 				.onClick(() => {
 					this.saved = false;
 					this.close();

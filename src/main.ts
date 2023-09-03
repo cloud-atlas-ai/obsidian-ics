@@ -60,11 +60,13 @@ export default class ICSPlugin extends Plugin {
 
 			dateEvents.forEach((e) => {
 				let event = {
-					'time': moment(e.start).format("HH:mm"),
+					'utime': moment(e.start).format('X'),
+					'time': moment(e.start).format(this.data.format.timeFormat),
+					'endTime': moment(e.end).format(this.data.format.timeFormat),
 					'icsName': calendarSetting.icsName,
 					'summary': e.summary,
 					'description': e.description,
-                    'format': calendarSetting.format,
+					'format': calendarSetting.format,
 					'location': null,
 				}
 
@@ -87,16 +89,17 @@ export default class ICSPlugin extends Plugin {
 			editorCallback: async (editor: Editor, view: MarkdownView) => {
 				const fileDate = getDateFromFile(view.file, "day").format("YYYY-MM-DD");
 				var events: any[] = await this.getEvents(fileDate);
-				const mdArray = events.map(e => {
-                    return [
-                        `- [ ] ${e.time}`,
-                        e.format?.icsName ? e.icsName : null,
-                        e.format?.summary ? e.summary : null,
+				const mdArray = events.sort((a,b) => a.utime - b.utime).map(e => {
+					return [
+						`- [ ] ${e.time}`,
+						e.format?.includeEventEndTime ? `- ${e.endTime}` : null,
+						e.format?.icsName ? e.icsName : null,
+						e.format?.summary ? e.summary : null,
 						e.format?.location ? e.location : null,
-                        e.format?.description && e.description ? `\n\t- ${e.description}` : null,
-                    ].filter(Boolean).join(' ')
+						e.format?.description && e.description ? `\n\t- ${e.description}` : null,
+					].filter(Boolean).join(' ')
 				});
-				editor.replaceRange(mdArray.sort().join("\n"), editor.getCursor());
+				editor.replaceRange(mdArray.join("\n"), editor.getCursor());
 			}
 		});
 	}

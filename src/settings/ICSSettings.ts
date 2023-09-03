@@ -1,4 +1,7 @@
 export interface ICSSettings {
+    format: {
+        timeFormat: string
+    },
     calendars: Record < string, Calendar > ;
 }
 
@@ -6,6 +9,7 @@ export interface Calendar {
     icsUrl: string;
     icsName: string;
     format: {
+        includeEventEndTime: boolean;
         icsName: boolean;
         summary: boolean;
         location: boolean;
@@ -14,6 +18,9 @@ export interface Calendar {
 }
 
 export const DEFAULT_SETTINGS: ICSSettings = {
+    format: {
+        timeFormat: "HH:mm"
+    },
     calendars: {
     }
 };
