@@ -31,7 +31,7 @@ If you want to support my work, you can [buy me a coffee](https://www.buymeacoff
 - [Allow plugin to run on mobile](https://github.com/muness/obsidian-ics/pull/46) @TopherMan
 - [Implement customizable output format for events](https://github.com/muness/obsidian-ics/pull/55) @GoBeromsu
 
-### Manual Installation
+## Manual Installation
 
 If for some reason you want to install the plugin manually:
 
