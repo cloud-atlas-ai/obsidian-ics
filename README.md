@@ -4,10 +4,6 @@ This is a plugin for [Obsidian](https://obsidian.md). It adds events from google
 
 This only works with the Daily Note or [Periodic Notes](https://github.com/liamcain/obsidian-periodic-notes) plugins: specifically it gets the date to search for events during from the currently open daily note.
 
-## Development state
-
-This works, though I recently fixed some issues with timezone offsets and missing recurring events. As soon as I get a few days to confirm this fixes, I'll work on submitting it to the Obsidian Community plugin marketplace. PRs and other help welcome!
-
 ## Installation
 
 This plugin is in the community plugin browser in Obsidian. Search for ICS and you can install it from there.
