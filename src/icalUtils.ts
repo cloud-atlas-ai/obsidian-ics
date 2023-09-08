@@ -41,29 +41,34 @@ function findRecurringEvents(icsArray: any[], dayToMatch: string) {
 				let skip = false;
 
 				// Use just the date of the recurrence to look up overrides and exceptions (i.e. chop off time information)
-				const dateLookupKey = date.toISOString().slice(0, 10);
+				try {
+					const dateLookupKey = date.toISOString().slice(0, 10);
 
-				if (origEvent.exdate !== undefined && curEvent.exdate[dateLookupKey] !== undefined) {
-					// If there's no recurrence override, check for an exception date.  Exception dates represent exceptions to the rule.
-					// This date is an exception date, which means we should skip it in the recurrence pattern.
-					skip = true;
+					if (origEvent.exdate !== undefined && curEvent.exdate[dateLookupKey] !== undefined) {
+						// If there's no recurrence override, check for an exception date.  Exception dates represent exceptions to the rule.
+						// This date is an exception date, which means we should skip it in the recurrence pattern.
+						skip = true;
+					}
+
+					// For each date that we're checking, it's possible that there is a recurrence override for that one day.
+					if (curEvent.recurrences !== undefined && curEvent.recurrences[dateLookupKey] !== undefined) {
+						// override event
+						curEvent = curEvent.recurrences[dateLookupKey];
+						//override duration
+						curDuration = extractDuration(curEvent);
+					}
+
+					//if this is the first instance of the event, we don't want it picked up here
+					if (moment(date).isSame(curEvent.start)) {
+						skip = true;
+					}
+
+					if (!skip)
+						matchingRecurringEvents.push(cloneRecurringEvent(origEvent, curEvent, date, curDuration));
+				} catch (e) {
+					console.error('Unable to parse date: ', date, e);
+					return
 				}
-
-				// For each date that we're checking, it's possible that there is a recurrence override for that one day.
-				if (curEvent.recurrences !== undefined && curEvent.recurrences[dateLookupKey] !== undefined) {
-					// override event
-					curEvent = curEvent.recurrences[dateLookupKey];
-					//override duration
-					curDuration = extractDuration(curEvent);
-				}
-
-				//if this is the first instance of the event, we don't want it picked up here
-				if (moment(date).isSame(curEvent.start)) {
-					skip = true;
-				}
-
-				if (!skip)
-					matchingRecurringEvents.push(cloneRecurringEvent(origEvent, curEvent, date, curDuration));
 			});
 		}
 	});
