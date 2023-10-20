@@ -22,11 +22,20 @@ function findRecurringEvents(icsArray: any[], dayToMatch: string) {
 	const rangeStart = moment(dayToMatch);
 	const rangeEnd = moment(dayToMatch).add(1439, 'minutes');
 	icsArray.forEach(origEvent => {
-		// When dealing with calendar recurrences, you need a range of dates to query against,
-		// because otherwise you can get an infinite number of calendar events.
-		const duration = extractDuration(origEvent);
+
+		// Add recurrences moved to dayToMatch
+		if (origEvent.recurrences !== undefined) {
+			for (let date in origEvent.recurrences) {
+				const recurrence = origEvent.recurrences[date];
+				if (recurrence.start.toISOString().slice(0, 10) === rangeStart.toISOString().slice(0, 10)) {
+					matchingRecurringEvents.push(recurrence);
+				}
+			}
+		}
 
 		if (typeof origEvent.rrule !== 'undefined') {
+			const duration = extractDuration(origEvent);
+
 			// Complicated case - if an RRULE exists, handle multiple recurrences of the event.
 			// For recurring events, get the set of event start dates that fall within the range
 			// of dates we're looking for.
@@ -78,7 +87,7 @@ function extractDuration(event: any) {
 }
 
 function applyTzOffset(origEvent: any, event: any, date: any) {
-	if (origEvent.rrule.origOptions.tzid) {
+	if (origEvent.rrule != undefined && origEvent.rrule.origOptions.tzid) {
 		// tzid present on the rrule
 		const eventTimeZone = tz.zone(origEvent.rrule.origOptions.tzid);
 		const localTimeZone = tz.zone(tz.guess());
