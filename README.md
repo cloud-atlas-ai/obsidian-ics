@@ -58,3 +58,12 @@ If for some reason you want to install the plugin manually:
 2. Unpack the file. It should create a `obsidian-ics` folder.
 3. Place the folder in your .obsidian/plugins directory
 4. Activate the `ICS` plugin
+
+## Local Development
+
+1. To develop Obsidian plugins you need NodeJS and npm installed. Do that first.
+2. `npm install`
+3. Make the changes you want...
+4. `npm run build` will build the plugin to `dist/main.js`
+5. copy the `dist/main/js` to your Obdisian vault plugin folder (`cp dist/main.js <vault>/.obsidian/plugins/ics/`).
+6. Reload the vault or use the [Hot Reload Plugin](https://github.com/pjeby/hot-reload).
