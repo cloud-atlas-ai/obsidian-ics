@@ -148,17 +148,19 @@ class SettingsModal extends Modal {
 	saved: boolean = false;
 	error: boolean = false;
 	format: {
+		checkbox: boolean,
 		includeEventEndTime: boolean,
 		icsName: boolean,
 		summary: boolean,
 		location: boolean,
 		description: boolean
 	} = {
-			includeEventEndTime: true,
-			icsName: true,
-			summary: true,
-			location: true,
-			description: false,
+		checkbox: true,
+		includeEventEndTime: true,
+		icsName: true,
+		summary: true,
+		location: true,
+		description: false,
 		};
 	constructor(app: App, setting?: Calendar) {
 		super(app);
@@ -206,6 +208,13 @@ class SettingsModal extends Modal {
 
 		const formatSetting = new Setting(settingDiv)
 			.setHeading().setName("Output Format");
+
+		const checkboxToggle = new Setting(settingDiv)
+			.setName('Checkbox')
+			.setDesc('Use a checkbox for each event (will be a bullet otherwise)')
+			.addToggle(toggle => toggle
+				.setValue(this.format.checkbox || false)
+				.onChange(value => this.format.checkbox = value));
 
 		const endTimeToggle = new Setting(settingDiv)
 			.setName('End time')

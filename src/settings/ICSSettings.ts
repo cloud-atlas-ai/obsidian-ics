@@ -9,6 +9,7 @@ export interface Calendar {
     icsUrl: string;
     icsName: string;
     format: {
+        checkbox: boolean;
         includeEventEndTime: boolean;
         icsName: boolean;
         summary: boolean;

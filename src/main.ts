@@ -91,7 +91,9 @@ export default class ICSPlugin extends Plugin {
 				var events: any[] = await this.getEvents(fileDate);
 				const mdArray = events.sort((a,b) => a.utime - b.utime).map(e => {
 					return [
-						`- [ ] ${e.time}`,
+						`- `,
+						e.format?.checkbox ? `[ ] ` : null,
+						`${e.time}`,
 						e.format?.includeEventEndTime ? `- ${e.endTime}` : null,
 						e.format?.icsName ? e.icsName : null,
 						e.format?.summary ? e.summary : null,
