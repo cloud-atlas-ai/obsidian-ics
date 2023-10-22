@@ -33,10 +33,12 @@ You can also use a [Dataview](https://blacksmithgu.github.io/obsidian-dataview/)
 var events = await app.plugins.getPlugin('ics').getEvents("{{date:YYYY-MM-DD}}");
 var mdArray = [];
 events.forEach((e) => {
-	mdArray.push(`${e.time} ${e.summary} ${e.location}: ${e.description}`.trim())
+  mdArray.push(`${e.time} ${e.summary} ${e.location}: ${e.description}`.trim())
 })
 dv.list(dv.array(mdArray))```
 ```
+
+You can see the available fields in the [Event interface](https://github.com/muness/obsidian-ics/blob/master/src/IEvent.ts).
 
 ### Templater
 
@@ -47,10 +49,11 @@ Or you can use [Templater](https://github.com/SilentVoid13/Templater):
 var events = await app.plugins.getPlugin('ics').getEvents(tp.file.title);
 var mdArray = [];
 events.sort((a,b) => a.utime - b.utime).forEach((e) => {
-	tR+=`- [ ] ${e.time} ${e.summary} ${e.location? e.location : ''}\n`
+  tR+=`- [ ] ${e.time} ${e.summary} ${e.location? e.location : ''}\n`
 })
 %>
 ```
+You can see the available fields in the [Event interface](https://github.com/muness/obsidian-ics/blob/master/src/IEvent.ts).
 
 ## Support
 
