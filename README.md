@@ -22,11 +22,11 @@ This plugin is in the community plugin browser in Obsidian. Search for ICS and y
 
 ### Usage
 
-Go to a daily note, use the `ICS: Import events` command. For customizations not available to the formatting, use Dataview (see below).
+Go to a daily note, use the `ICS: Import events` command. For customizations not available to the formatting, use Dataview or Templater (see below).
 
 ### Data view usage
 
-You can also use a templater + [Dataview](https://blacksmithgu.github.io/obsidian-dataview/) to add your events to your journal notes when they get created. For examples, if you use the core Templates plugin you can add the following to add events to your daily note template:
+You can also use a [Dataview](https://blacksmithgu.github.io/obsidian-dataview/) to add your events to your journal notes when they get created. For examples, if you use the core Templates plugin you can add the following to add events to your daily note template:
 
 ```javascript
 ```dataviewjs
@@ -36,6 +36,20 @@ events.forEach((e) => {
 	mdArray.push(`${e.time} ${e.summary} ${e.location}: ${e.description}`.trim())
 })
 dv.list(dv.array(mdArray))```
+```
+
+### Templater
+
+Or you can use [Templater](https://github.com/SilentVoid13/Templater):
+
+```javascript
+<%*
+var events = await app.plugins.getPlugin('ics').getEvents(tp.file.title);
+var mdArray = [];
+events.sort((a,b) => a.utime - b.utime).forEach((e) => {
+	tR+=`- [ ] ${e.time} ${e.summary} ${e.location? e.location : ''}\n`
+})
+%>
 ```
 
 ## Support
