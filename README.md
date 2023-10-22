@@ -36,6 +36,7 @@ events.forEach((e) => {
 	mdArray.push(`${e.time} ${e.summary} ${e.location}: ${e.description}`.trim())
 })
 dv.list(dv.array(mdArray))```
+```
 
 ## Support
 
