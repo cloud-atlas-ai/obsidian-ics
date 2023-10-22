@@ -18,6 +18,15 @@ export interface Calendar {
     }
 }
 
+export const DEFAULT_CALENDAR_FORMAT = {
+    checkbox: true,
+    includeEventEndTime: true,
+    icsName: true,
+    summary: true,
+    location: true,
+    description: false,
+};
+
 export const DEFAULT_SETTINGS: ICSSettings = {
     format: {
         timeFormat: "HH:mm"
