@@ -67,11 +67,7 @@ export default class ICSPlugin extends Plugin {
 					'summary': e.summary,
 					'description': e.description,
 					'format': calendarSetting.format,
-					'location': null,
-				}
-
-				if (e.location) {
-					event['location'] = e.location;
+					'location': e.location? e.location : null,
 				}
 				events.push(event);
 			});
