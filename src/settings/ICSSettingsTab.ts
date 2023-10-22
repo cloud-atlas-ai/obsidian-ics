@@ -213,7 +213,7 @@ class SettingsModal extends Modal {
 			.setName('Checkbox')
 			.setDesc('Use a checkbox for each event (will be a bullet otherwise)')
 			.addToggle(toggle => toggle
-				.setValue(this.format.checkbox || true)
+				.setValue(this.format?.checkbox || false)
 				.onChange(value => this.format.checkbox = value));
 
 		const endTimeToggle = new Setting(settingDiv)
