@@ -19,7 +19,7 @@ import {
 	Plugin,
 	request
 } from 'obsidian';
-import { parseIcs, filterMatchingEvents } from './icalUtils';
+import { parseIcs, filterMatchingEvents, extractMeetingInfo } from './icalUtils';
 
 export default class ICSPlugin extends Plugin {
 	data: ICSSettings;
@@ -59,6 +59,8 @@ export default class ICSPlugin extends Plugin {
 			const dateEvents = filterMatchingEvents(icsArray, date);
 
 			dateEvents.forEach((e) => {
+				const { callUrl, callType } = extractMeetingInfo(e);
+
 				let event = {
 					'utime': moment(e.start).format('X'),
 					'time': moment(e.start).format(this.data.format.timeFormat),
@@ -68,7 +70,9 @@ export default class ICSPlugin extends Plugin {
 					'description': e.description,
 					'format': calendarSetting.format,
 					'location': e.location? e.location : null,
-				}
+					'callUrl': callUrl,
+					'callType': callType
+				};
 				events.push(event);
 			});
 
@@ -85,14 +89,16 @@ export default class ICSPlugin extends Plugin {
 			editorCallback: async (editor: Editor, view: MarkdownView) => {
 				const fileDate = getDateFromFile(view.file, "day").format("YYYY-MM-DD");
 				var events: any[] = await this.getEvents(fileDate);
+
 				const mdArray = events.sort((a,b) => a.utime - b.utime).map(e => {
+					const callLinkOrlocation = e.callType ? `[${e.callType}](${e.callUrl})` : e.location;
 					return [
 						`- ${e.format?.checkbox ? '[ ]' : ''}`,
 						`${e.time}`,
 						e.format?.includeEventEndTime ? `- ${e.endTime}` : null,
 						e.format?.icsName ? e.icsName : null,
 						e.format?.summary ? e.summary : null,
-						e.format?.location ? e.location : null,
+						e.format?.location ? callLinkOrlocation : null,
 						e.format?.description && e.description ? `\n\t- ${e.description}` : null,
 					].filter(Boolean).join(' ')
 				});
