@@ -12,7 +12,7 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
-    "moment-timezone": "^0.5.33",
+    "moment-timezone": "^0.5.43",
     "node-ical": "^0.16.1",
     "obsidian-daily-notes-interface": "^0.9.2"
   },
