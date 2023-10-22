@@ -15,14 +15,14 @@ This plugin is in the community plugin browser in Obsidian. Search for ICS and y
 1. From Google Calendar, look for the calendar in the left sidebar click the vertical … menu, Settings and Sharing, Integrate calendar, Copy the Secret address in iCal format
 2. Enter that URL into settings with a calendar name
 3. Customize your format settings. Some are per calendar, others are for all calendars.
-   - Per calendar settings: Whether to include the event end time, the calendar name, event summary, event location, event description
+   - Per calendar settings: Whether to include a checkbox, the event end time, the calendar name, event summary, event location, event description
    - General output settings: Time [format](https://momentjs.com/docs/#/displaying/).
 
 ![Settings Screenshot](https://github.com/muness/obsidian-ics/blob/master/docs/2023-09-03-settings.png?raw=true)
 
 ### Usage
 
-Go to a daily note, use the `ICS: Import events` command
+Go to a daily note, use the `ICS: Import events` command. For customizations not available to the formatting, use Dataview (see below).
 
 ### Data view usage
 

@@ -67,11 +67,7 @@ export default class ICSPlugin extends Plugin {
 					'summary': e.summary,
 					'description': e.description,
 					'format': calendarSetting.format,
-					'location': null,
-				}
-
-				if (e.location) {
-					event['location'] = e.location;
+					'location': e.location? e.location : null,
 				}
 				events.push(event);
 			});
@@ -91,7 +87,9 @@ export default class ICSPlugin extends Plugin {
 				var events: any[] = await this.getEvents(fileDate);
 				const mdArray = events.sort((a,b) => a.utime - b.utime).map(e => {
 					return [
-						`- [ ] ${e.time}`,
+						`- `,
+						e.format?.checkbox ? `[ ] ` : null,
+						`${e.time}`,
 						e.format?.includeEventEndTime ? `- ${e.endTime}` : null,
 						e.format?.icsName ? e.icsName : null,
 						e.format?.summary ? e.summary : null,

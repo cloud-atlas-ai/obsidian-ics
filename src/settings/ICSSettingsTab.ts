@@ -9,7 +9,8 @@ import {
 } from "obsidian";
 
 import {
-	Calendar
+	Calendar,
+	DEFAULT_CALENDAR_FORMAT
 } from "./ICSSettings";
 
 export function getCalendarElement(
@@ -134,7 +135,7 @@ export default class ICSSettingsTab extends PluginSettingTab {
 			});
 
 		// Sponsor link - Thank you!
-		const divSponsor = containerEl.createDiv()
+		const divSponsor = containerEl.createDiv();
 		divSponsor.innerHTML = `<br/><hr/>A scratch my own itch project by <a href="https://muness.com/" target='_blank'>muness</a>.<br/>
 			<a href='https://www.buymeacoffee.com/muness' target='_blank'><img height="36" src='https://cdn.buymeacoffee.com/uploads/profile_pictures/default/79D6B5/MC.png' border='0' alt='Buy Me a Book' /></a>
 		`
@@ -148,18 +149,13 @@ class SettingsModal extends Modal {
 	saved: boolean = false;
 	error: boolean = false;
 	format: {
+		checkbox: boolean,
 		includeEventEndTime: boolean,
 		icsName: boolean,
 		summary: boolean,
 		location: boolean,
 		description: boolean
-	} = {
-			includeEventEndTime: true,
-			icsName: true,
-			summary: true,
-			location: true,
-			description: false,
-		};
+	} = DEFAULT_CALENDAR_FORMAT;
 	constructor(app: App, setting?: Calendar) {
 		super(app);
 		if (setting) {
@@ -206,6 +202,20 @@ class SettingsModal extends Modal {
 
 		const formatSetting = new Setting(settingDiv)
 			.setHeading().setName("Output Format");
+
+		// set each of the calendar format settings to the default if it's undefined
+		for (let f in DEFAULT_CALENDAR_FORMAT) {
+			if (this.format[f] == undefined) {
+				this.format[f] = DEFAULT_CALENDAR_FORMAT[f];
+			}
+		}
+
+		const checkboxToggle = new Setting(settingDiv)
+			.setName('Checkbox')
+			.setDesc('Use a checkbox for each event (will be a bullet otherwise)')
+			.addToggle(toggle => toggle
+				.setValue(this.format.checkbox || false)
+				.onChange(value => this.format.checkbox = value));
 
 		const endTimeToggle = new Setting(settingDiv)
 			.setName('End time')
