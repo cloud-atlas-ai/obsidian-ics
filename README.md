@@ -29,13 +29,13 @@ Go to a daily note, use the `ICS: Import events` command. For customizations not
 You can also use a templater + [Dataview](https://blacksmithgu.github.io/obsidian-dataview/) to add your events to your journal notes when they get created. For examples, if you use the core Templates plugin you can add the following to add events to your daily note template:
 
 ```javascript
+```dataviewjs
 var events = await app.plugins.getPlugin('ics').getEvents("{{date:YYYY-MM-DD}}");
 var mdArray = [];
 events.forEach((e) => {
-  mdArray.push(`${e.time} ${e.summary} ${e.location}: ${e.description}`.trim())
+	mdArray.push(`${e.time} ${e.summary} ${e.location}: ${e.description}`.trim())
 })
-dv.list(dv.array(mdArray))
-```
+dv.list(dv.array(mdArray))```
 
 ## Support
 
