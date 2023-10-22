@@ -2,6 +2,30 @@ const ical = require('node-ical');
 import { tz } from 'moment-timezone';
 import { moment } from "obsidian";
 
+export function extractMeetingInfo(e: any): { callUrl: string, callType: string } {
+
+	// Check for Google Meet conference data
+	if (e["GOOGLE-CONFERENCE"]) {
+		return { callUrl: e["GOOGLE-CONFERENCE"], callType: 'Google Meet' };
+	}
+	// Check if the location contains a Zoom link
+	if (e.location && e.location.includes('zoom.us')) {
+		return { callUrl: e.location, callType: 'Zoom' };
+	}
+	if (e.description) {
+		const skypeMatch = e.description.match(/https:\/\/join.skype.com\/[a-zA-Z0-9]+/);
+		if (skypeMatch) {
+			return { callUrl: skypeMatch[0], callType: 'Skype' };
+		}
+
+		const teamsMatch = e.description.match(/(https:\/\/teams\.microsoft\.com\/l\/meetup-join\/[^>]+)/);
+		if (teamsMatch) {
+			return { callUrl: teamsMatch[0], callType: 'Microsoft Teams' };
+		}
+	}
+	return { callUrl: null, callType: null };
+}
+
 export function filterMatchingEvents(icsArray: any[], dayToMatch: string) {
 	var matchingEvents = [];
 	matchingEvents = findRecurringEvents(icsArray, dayToMatch);
