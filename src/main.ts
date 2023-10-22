@@ -20,6 +20,7 @@ import {
 	request
 } from 'obsidian';
 import { parseIcs, filterMatchingEvents, extractMeetingInfo } from './icalUtils';
+import { IEvent } from './IEvent';
 
 export default class ICSPlugin extends Plugin {
 	data: ICSSettings;
@@ -39,8 +40,8 @@ export default class ICSPlugin extends Plugin {
 		await this.saveSettings();
 	}
 
-	async getEvents(date: string) {
-		var events: any[] = [];
+	async getEvents(date: string) : Promise<IEvent[]> {
+		var events: IEvent[] = [];
 
 		for (const calendar in this.data.calendars) {
 			const calendarSetting = this.data.calendars[calendar];
@@ -61,17 +62,17 @@ export default class ICSPlugin extends Plugin {
 			dateEvents.forEach((e) => {
 				const { callUrl, callType } = extractMeetingInfo(e);
 
-				let event = {
-					'utime': moment(e.start).format('X'),
-					'time': moment(e.start).format(this.data.format.timeFormat),
-					'endTime': moment(e.end).format(this.data.format.timeFormat),
-					'icsName': calendarSetting.icsName,
-					'summary': e.summary,
-					'description': e.description,
-					'format': calendarSetting.format,
-					'location': e.location? e.location : null,
-					'callUrl': callUrl,
-					'callType': callType
+				let event: IEvent = {
+					utime: moment(e.start).format('X'),
+					time: moment(e.start).format(this.data.format.timeFormat),
+					endTime: moment(e.end).format(this.data.format.timeFormat),
+					icsName: calendarSetting.icsName,
+					summary: e.summary,
+					description: e.description,
+				  format: calendarSetting.format,
+					location: e.location? e.location : null,
+					callUrl: callUrl,
+					callType: callType
 				};
 				events.push(event);
 			});
