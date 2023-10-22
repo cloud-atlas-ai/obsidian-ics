@@ -53,6 +53,7 @@ events.sort((a,b) => a.utime - b.utime).forEach((e) => {
 })
 %>
 ```
+
 You can see the available fields in the [Event interface](https://github.com/muness/obsidian-ics/blob/master/src/IEvent.ts).
 
 ## Support
