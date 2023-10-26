@@ -95,7 +95,7 @@ export default class ICSPlugin extends Plugin {
 	
 		// Notify the user if any errors were encountered
 		if (errorMessages.length > 0) {
-			const message = `Encountered ${errorMessages.length} error(s) while processing calendars: ${errorMessages.join(', ')}. See console for details.`;
+			const message = `Encountered ${errorMessages.length} error(s) while processing calendars:\n\n${errorMessages.join('\n')}\nSee console for details.`;
 			new Notice(message);
 		}
 	
