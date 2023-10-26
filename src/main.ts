@@ -41,45 +41,66 @@ export default class ICSPlugin extends Plugin {
 	}
 
 	async getEvents(date: string) : Promise<IEvent[]> {
-		var events: IEvent[] = [];
-
+		let events: IEvent[] = [];
+		let errorMessages: string[] = []; // To store error messages
+	
 		for (const calendar in this.data.calendars) {
 			const calendarSetting = this.data.calendars[calendar];
-			var icsArray: any[] = [];
-
+			let icsArray: any[] = [];
+	
+			// Exception handling for downloading
 			try {
-				var icsArray = parseIcs(await request({
+				icsArray = parseIcs(await request({
 					url: calendarSetting.icsUrl
 				}));
-
 			} catch (error) {
-				console.error('error retrieving calendar ' + calendarSetting.icsName + ' with ics URL ' + calendarSetting.icsUrl + ' : ' + error);
-				new Notice(`Error retrieving calendar with name "${calendarSetting.icsName}". See console for details.`);
+				console.error(`Error retrieving calendar ${calendarSetting.icsName} with ICS URL ${calendarSetting.icsUrl}: ${error}`);
+				errorMessages.push(`Error retrieving calendar "${calendarSetting.icsName}"`);
 			}
 
-			const dateEvents = filterMatchingEvents(icsArray, date);
+			var dateEvents;
+	
+			// Exception handling for parsing and filtering
+			try {
+				dateEvents = filterMatchingEvents(icsArray, date);
+	
+			} catch (filterError) {
+				console.error(`Error filtering events for calendar ${calendarSetting.icsName}: ${filterError}`);
+				errorMessages.push(`Error filtering events in calendar "${calendarSetting.icsName}"`);
+			}
 
-			dateEvents.forEach((e) => {
-				const { callUrl, callType } = extractMeetingInfo(e);
-
-				let event: IEvent = {
-					utime: moment(e.start).format('X'),
-					time: moment(e.start).format(this.data.format.timeFormat),
-					endTime: moment(e.end).format(this.data.format.timeFormat),
-					icsName: calendarSetting.icsName,
-					summary: e.summary,
-					description: e.description,
-				  format: calendarSetting.format,
-					location: e.location? e.location : null,
-					callUrl: callUrl,
-					callType: callType
-				};
-				events.push(event);
-			});
-
+			try {
+				dateEvents.forEach((e) => {
+					const { callUrl, callType } = extractMeetingInfo(e);
+	
+					let event: IEvent = {
+						utime: moment(e.start).format('X'),
+						time: moment(e.start).format(this.data.format.timeFormat),
+						endTime: moment(e.end).format(this.data.format.timeFormat),
+						icsName: calendarSetting.icsName,
+						summary: e.summary,
+						description: e.description,
+						format: calendarSetting.format,
+						location: e.location? e.location : null,
+						callUrl: callUrl,
+						callType: callType
+					};
+					events.push(event);
+				});
+			} catch (parseError) {
+				console.error(`Error parsing events for calendar ${calendarSetting.icsName}: ${parseError}`);
+				errorMessages.push(`Error parsing events in calendar "${calendarSetting.icsName}"`);
+			}
 		}
+	
+		// Notify the user if any errors were encountered
+		if (errorMessages.length > 0) {
+			const message = `Encountered ${errorMessages.length} error(s) while processing calendars: ${errorMessages.join(', ')}. See console for details.`;
+			new Notice(message);
+		}
+	
 		return events;
-	}
+	}	
 
 	async onload() {
 		await this.loadSettings();
