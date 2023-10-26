@@ -22,7 +22,9 @@ This plugin is in the community plugin browser in Obsidian. Search for ICS and y
 
 ### Usage
 
-Go to a daily note, use the `ICS: Import events` command. For customizations not available to the formatting, use Dataview or Templater (see below).
+Go to a daily note, use the `ICS: Import events` command.
+
+For customizations not available to the formatting, use Dataview or Templater (see below). Likewise, if you want to automatically import events when you create your daily notes, you'll want to use one of those.
 
 ### Data view usage
 
@@ -53,6 +55,8 @@ events.sort((a,b) => a.utime - b.utime).forEach((e) => {
 })
 %>
 ```
+
+See [advanced Templated usage example](https://github.com/muness/obsidian-ics/discussions/74#discussion-5779931) for an example that demonstrates more features.
 
 You can see the available fields in the [Event interface](https://github.com/muness/obsidian-ics/blob/master/src/IEvent.ts).
 
