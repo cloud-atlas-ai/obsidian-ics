@@ -45,12 +45,13 @@ export function filterMatchingEvents(icsArray: any[], dayToMatch: string) {
 				const clonedEvent = { ...event };
 
 				// But timezones...
-				var offset = 0;
+				var offset = (event.start.getTimezoneOffset() - date.getTimezoneOffset()); // default to orig timezone offset
 				if (event.rrule != undefined && event.rrule.origOptions.tzid) {
 					const eventTimeZone = tz.zone(event.rrule.origOptions.tzid);
 					offset = localTimeZone.utcOffset(date) - eventTimeZone.utcOffset(date);
 				}
 
+				// correct start and end times
 				clonedEvent.start = moment(date).add(offset, 'minutes');
 				clonedEvent.end = moment(clonedEvent.start).add(moment(event.end).diff(moment(event.start)), 'ms');
 
@@ -66,32 +67,6 @@ export function filterMatchingEvents(icsArray: any[], dayToMatch: string) {
 		}
 		return matchingEvents;
 	}, []);;
-}
-
-function applyTzOffset(origEvent: any, start: any, date: any) {
-	if (origEvent.rrule != undefined && origEvent.rrule.origOptions.tzid) {
-		// tzid present on the rrule
-		const eventTimeZone = tz.zone(origEvent.rrule.origOptions.tzid);
-		const localTimeZone = tz.zone(tz.guess());
-		const offset = localTimeZone.utcOffset(date) - eventTimeZone.utcOffset(date);
-		return moment(date).add(offset, 'minutes');
-	} else {
-		// tzid not present on rrule (calculate offset from original start)
-		return moment(new Date(date.setHours(date.getHours() - ((start.getTimezoneOffset() - date.getTimezoneOffset()) / 60))));
-	}
-}
-
-function cloneRecurringEvent(origEvent: any, event: any, date: any, duration: any) {
-	let startDate = applyTzOffset(origEvent, event, date);
-	let endDate = moment(Number.parseInt(moment(startDate).format('x'), 10) + duration, 'x');
-
-	return {
-		description: event.description,
-		summary: `${event.summary} (recurring)`,
-		start: startDate.toDate(),
-		end: endDate.toDate(),
-		location: event.location,
-	};
 }
 
 export function parseIcs(ics: string) {
