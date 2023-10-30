@@ -1,7 +1,6 @@
 const ical = require('node-ical');
 import { tz } from 'moment-timezone';
 import { moment } from "obsidian";
-import { RRule, RRuleSet, rrulestr } from 'rrule';
 
 export function extractMeetingInfo(e: any): { callUrl: string, callType: string } {
 
@@ -40,16 +39,21 @@ export function filterMatchingEvents(icsArray: any[], dayToMatch: string) {
 			}
 		}
 		if (typeof event.rrule !== 'undefined') {
-			console.log(event);
-			event.rrule.between(moment(dayToMatch).startOf('day').toDate(), moment(dayToMatch).startOf('day').toDate()).forEach(date => {
-				// We need to clone the existing event and override the start and end date.
-				const clonedEvent = { ...event };
-				const localDate = tz(date, moment.tz.guess());
-				clonedEvent.start = localDate.toDate();
+			event.rrule.between(moment(dayToMatch).startOf('day').toDate(), moment(dayToMatch).endOf('day').toDate()).forEach(date => {
+				// We need to clone the event and override the date
 
-				if (event.duration) {
-					clonedEvent.end = localDate.clone().add(event.duration, 'milliseconds');
+				const clonedEvent = { ...event };
+
+				// But timezones...
+				var offset = 0;
+				if (event.rrule != undefined && event.rrule.origOptions.tzid) {
+					const eventTimeZone = tz.zone(event.rrule.origOptions.tzid);
+					const localTimeZone = tz.zone(tz.guess());
+					offset = localTimeZone.utcOffset(date) - eventTimeZone.utcOffset(date);
 				}
+
+				clonedEvent.start = moment(date).add(offset, 'minutes');
+				clonedEvent.end = moment(clonedEvent.start).add(moment(event.end).diff(moment(event.start)), 'ms');
 
 				// Remove rrule property from clonedEvent
 				delete clonedEvent.rrule;
