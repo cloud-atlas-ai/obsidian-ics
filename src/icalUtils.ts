@@ -30,15 +30,20 @@ export function filterMatchingEvents(icsArray: any[], dayToMatch: string) {
 	const localTimeZone = tz.zone(tz.guess());
 
 	return icsArray.reduce((matchingEvents, event) => {
+		var hasRecurrenceOverride = false
 		if (event.recurrences !== undefined) {
 			for (let date in event.recurrences) {
+				if (moment(date).isSame(dayToMatch, "day")) {
+					hasRecurrenceOverride = true;
+				}
+
 				const recurrence = event.recurrences[date];
 				if (moment(recurrence.start).isSame(dayToMatch, "day")) {
 					matchingEvents.push(recurrence);
 				}
 			}
 		}
-		if (typeof event.rrule !== 'undefined') {
+		if (typeof event.rrule !== 'undefined' && !hasRecurrenceOverride) {
 			event.rrule.between(moment(dayToMatch).startOf('day').toDate(), moment(dayToMatch).endOf('day').toDate()).forEach(date => {
 				// We need to clone the event and override the date
 
@@ -60,7 +65,7 @@ export function filterMatchingEvents(icsArray: any[], dayToMatch: string) {
 
 				matchingEvents.push(clonedEvent);
 			});
-		} else {
+		} else if (!hasRecurrenceOverride) {
 			if (moment(event.start).isSame(dayToMatch, "day")) {
 				matchingEvents.push(event);
 			}
