@@ -12,6 +12,7 @@ import {
 	Calendar,
 	DEFAULT_CALENDAR_FORMAT
 } from "./ICSSettings";
+import moment = require("moment");
 
 export function getCalendarElement(
 	icsName: string): HTMLElement {
@@ -30,11 +31,41 @@ export function getCalendarElement(
 
 export default class ICSSettingsTab extends PluginSettingTab {
 	plugin: ICSPlugin;
+	timeFormatExample = document.createElement('b');
 
 	constructor(app: App, plugin: ICSPlugin) {
 		super(app, plugin);
 		this.plugin = plugin;
 	}
+
+
+private timeFormattingDescription() {
+	this.updateTimeFormatExample();
+
+	const descEl = document.createDocumentFragment();
+	descEl.appendText('Time format for events. HH:mm is 00:15. hh:mma is 12:15am.');
+	descEl.appendText(' For more syntax, refer to ');
+	descEl.appendChild(this.getMomentDocsLink());
+	descEl.appendText('.');
+
+	descEl.appendChild(document.createElement('p'));
+	descEl.appendText('Your current time format syntax looks like this: ');
+	descEl.appendChild(this.timeFormatExample);
+	descEl.appendText('.');
+	return descEl;
+}
+
+private updateTimeFormatExample() {
+	this.timeFormatExample.innerText = moment(new Date()).format(this.plugin.data.format.timeFormat);
+}
+
+private getMomentDocsLink() {
+	const a = document.createElement('a');
+	a.href = 'https://momentjs.com/docs/#/displaying/format/';
+	a.text = 'format reference';
+	a.target = '_blank';
+	return a;
+}
 
 	display(): void {
 		let {
@@ -126,13 +157,17 @@ export default class ICSSettingsTab extends PluginSettingTab {
 		let timeFormat: TextComponent;
 		const timeFormatSetting = new Setting(containerEl)
 			.setName("Time format")
-			.setDesc('HH:mm will display 00:15. hh:mma will display 12:15am.')
+			.setDesc(this.timeFormattingDescription())
 			.addText((text) => {
 				timeFormat = text;
 				timeFormat.setValue(this.plugin.data.format.timeFormat).onChange((v) => {
 					this.plugin.data.format.timeFormat = v;
+					this.updateTimeFormatExample();
 				});
 			});
+
+
+
 
 		// Sponsor link - Thank you!
 		const divSponsor = containerEl.createDiv();
@@ -141,6 +176,7 @@ export default class ICSSettingsTab extends PluginSettingTab {
 		`
 	}
 }
+
 
 class SettingsModal extends Modal {
 	icsName: string = "";
