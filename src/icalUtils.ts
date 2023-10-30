@@ -27,7 +27,7 @@ export function extractMeetingInfo(e: any): { callUrl: string, callType: string 
 }
 
 export function filterMatchingEvents(icsArray: any[], dayToMatch: string) {
-	const localTimezone = tz.guess();
+	const localTimeZone = tz.zone(tz.guess());
 
 	return icsArray.reduce((matchingEvents, event) => {
 		if (event.recurrences !== undefined) {
@@ -48,7 +48,6 @@ export function filterMatchingEvents(icsArray: any[], dayToMatch: string) {
 				var offset = 0;
 				if (event.rrule != undefined && event.rrule.origOptions.tzid) {
 					const eventTimeZone = tz.zone(event.rrule.origOptions.tzid);
-					const localTimeZone = tz.zone(tz.guess());
 					offset = localTimeZone.utcOffset(date) - eventTimeZone.utcOffset(date);
 				}
 
