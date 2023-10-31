@@ -48,7 +48,7 @@ Or you can use [Templater](https://github.com/SilentVoid13/Templater):
 
 ```javascript
 <%*
-var events = await app.plugins.getPlugin('ics').getEvents(tp.file.title);
+var events = await app.plugins.getPlugin('ics').getEvents(moment(tp.file.title,'YYYY-MM-DD'));
 var mdArray = [];
 events.sort((a,b) => a.utime - b.utime).forEach((e) => {
   tR+=`- [ ] ${e.time} ${e.summary} ${e.location? e.location : ''}\n`
