@@ -35,7 +35,6 @@ You can also use a [Dataview](https://blacksmithgu.github.io/obsidian-dataview/)
 ```javascript
 ```dataviewjs
 var events = await app.plugins.getPlugin('ics').getEvents("{{date:YYYY-MM-DD}}");
-var mdArray = [];
 events.forEach((e) => {
   mdArray.push(`${e.time} ${e.summary} ${e.location}: ${e.description}`.trim())
 })
@@ -51,7 +50,6 @@ Or you can use [Templater](https://github.com/SilentVoid13/Templater):
 ```javascript
 <%*
 var events = await app.plugins.getPlugin('ics').getEvents(moment(tp.file.title,'YYYY-MM-DD'));
-var mdArray = [];
 events.sort((a,b) => a.utime - b.utime).forEach((e) => {
   tR+=`- [ ] ${e.time} ${e.summary} ${e.location? e.location : ''}\n`
 })
