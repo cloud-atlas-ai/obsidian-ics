@@ -35,6 +35,7 @@ You can also use a [Dataview](https://blacksmithgu.github.io/obsidian-dataview/)
 ```javascript
 ```dataviewjs
 var events = await app.plugins.getPlugin('ics').getEvents("{{date:YYYY-MM-DD}}");
+var mdArray = [];
 events.forEach((e) => {
   mdArray.push(`${e.time} ${e.summary} ${e.location}: ${e.description}`.trim())
 })
