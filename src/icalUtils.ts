@@ -26,6 +26,18 @@ export function extractMeetingInfo(e: any): { callUrl: string, callType: string 
 	return { callUrl: null, callType: null };
 }
 
+function adjustDateToOriginalTimezone(originalDate: Date, currentDate: Date, tzid: string): Date {
+	const momentOriginal = tz(originalDate, tzid);
+	const momentCurrent = tz(currentDate, tzid);
+
+	// Calculate the difference in hours and minutes between the original and current
+	const hourOffset = momentOriginal.hour() - momentCurrent.hour();
+	const minuteOffset = momentOriginal.minute() - momentCurrent.minute();
+
+	// Adjust the current date by the offset to keep the local time constant
+	return momentCurrent.add(hourOffset, 'hours').add(minuteOffset, 'minutes').toDate();
+}
+
 export function filterMatchingEvents(icsArray: any[], dayToMatch: string) {
 	const localTimeZone = tz.zone(tz.guess());
 
@@ -49,19 +61,30 @@ export function filterMatchingEvents(icsArray: any[], dayToMatch: string) {
 
 				const clonedEvent = { ...event };
 
-				// But timezones...
-				var offset = (event.start.getTimezoneOffset() - date.getTimezoneOffset()); // default to orig timezone offset
-				if (event.rrule != undefined && event.rrule.origOptions.tzid) {
-					const eventTimeZone = tz.zone(event.rrule.origOptions.tzid);
-					offset = localTimeZone.utcOffset(date) - eventTimeZone.utcOffset(date);
-				}
+				console.debug('Found a recurring event to clone: ', event.summary, ' on ', date, 'at ', event.start.toString());
+				console.debug("RRULE origOptions:", event.rrule.origOptions);
 
-				// correct start and end times
-				clonedEvent.start = moment(date).add(offset, 'minutes');
-				clonedEvent.end = moment(clonedEvent.start).add(moment(event.end).diff(moment(event.start)), 'ms');
+				// But timezones...
+				if (event.rrule != undefined && event.rrule.origOptions.tzid) {
+					const tzid = event.rrule.origOptions.tzid;
+					console.debug("Event rrule.origOptions.tzid:", tzid);
+					// Adjust the cloned event start and end times to the original event timezone
+					clonedEvent.start = adjustDateToOriginalTimezone(event.start, date, tzid);
+					clonedEvent.end = adjustDateToOriginalTimezone(event.end, date, tzid);
+				} else {
+					// If there is no timezone information, assume the event time should not change
+					clonedEvent.start = new Date(date);
+					clonedEvent.end = new Date(date.getTime() + (event.end.getTime() - event.start.getTime()));
+				}
 
 				// Remove rrule property from clonedEvent
 				delete clonedEvent.rrule;
+
+				console.debug("Cloned event:", {
+					...clonedEvent,
+					start: clonedEvent.start.toString(),
+					end: clonedEvent.end.toString()
+				});
 
 				matchingEvents.push(clonedEvent);
 			});
