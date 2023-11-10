@@ -38,34 +38,40 @@ export default class ICSSettingsTab extends PluginSettingTab {
 		this.plugin = plugin;
 	}
 
+	// use this same format to create a description for the dataViewSyntax setting
+	private timeFormattingDescription(): DocumentFragment {
+		this.updateTimeFormatExample();
 
-private timeFormattingDescription() {
-	this.updateTimeFormatExample();
+		const descEl = document.createDocumentFragment();
+		descEl.appendText('Time format for events. HH:mm is 00:15. hh:mma is 12:15am.');
+		descEl.appendText(' For more syntax, refer to ');
+		descEl.appendChild(this.getMomentDocsLink());
+		descEl.appendText('.');
 
-	const descEl = document.createDocumentFragment();
-	descEl.appendText('Time format for events. HH:mm is 00:15. hh:mma is 12:15am.');
-	descEl.appendText(' For more syntax, refer to ');
-	descEl.appendChild(this.getMomentDocsLink());
-	descEl.appendText('.');
+		descEl.appendChild(document.createElement('p'));
+		descEl.appendText('Your current time format syntax looks like this: ');
+		descEl.appendChild(this.timeFormatExample);
+		descEl.appendText('.');
+		return descEl;
+	}
 
-	descEl.appendChild(document.createElement('p'));
-	descEl.appendText('Your current time format syntax looks like this: ');
-	descEl.appendChild(this.timeFormatExample);
-	descEl.appendText('.');
-	return descEl;
-}
+	private getMomentDocsLink(): HTMLAnchorElement {
+		const a = document.createElement('a');
+		a.href = 'https://momentjs.com/docs/#/displaying/format/';
+		a.text = 'format reference';
+		a.target = '_blank';
+		return a;
+	}
 
-private updateTimeFormatExample() {
-	this.timeFormatExample.innerText = moment(new Date()).format(this.plugin.data.format.timeFormat);
-}
+	private updateTimeFormatExample() {
+		this.timeFormatExample.innerText = moment(new Date()).format(this.plugin.data.format.timeFormat);
+	}
 
-private getMomentDocsLink() {
-	const a = document.createElement('a');
-	a.href = 'https://momentjs.com/docs/#/displaying/format/';
-	a.text = 'format reference';
-	a.target = '_blank';
-	return a;
-}
+	private dataViewSyntaxDescription(): DocumentFragment {
+		const descEl = document.createDocumentFragment();
+		descEl.appendText('Enable this option if you use the DataView plugin to query event start and end times.');
+		return descEl;
+	}
 
 	display(): void {
 		let {
@@ -166,8 +172,12 @@ private getMomentDocsLink() {
 				});
 			});
 
-
-
+		const dataViewSyntaxSetting = new Setting(containerEl)
+			.setName('DataView Metadata syntax for start and end times')
+			.setDesc(this.dataViewSyntaxDescription())
+			.addToggle(toggle => toggle
+				.setValue(this.plugin.data.format.dataViewSyntax || false)
+				.onChange(value => this.plugin.data.format.dataViewSyntax = value));
 
 		// Sponsor link - Thank you!
 		const divSponsor = containerEl.createDiv();
