@@ -40,14 +40,33 @@ export default class ICSPlugin extends Plugin {
 		await this.saveSettings();
 	}
 
+	formatEvent(e: IEvent): string {
+		const callLinkOrLocation = e.callType ? `[${e.callType}](${e.callUrl})` : e.location;
+
+		// Conditionally format start and end time based on dataViewSyntax setting
+		const startTimeFormatted = this.data.format.dataViewSyntax ? `[startTime:: ${e.time}]` : `${e.time}`;
+		const endTimeFormatted = e.format.includeEventEndTime ? (this.data.format.dataViewSyntax ? `[endTime:: ${e.endTime}]` : `- ${e.endTime}`) : '';
+
+		// Combine all parts of the formatted event string
+		return [
+				`- ${e.format.checkbox ? '[ ]' : ''}`,
+				startTimeFormatted,
+				endTimeFormatted,
+				e.format.icsName ? e.icsName : '',
+				e.format.summary ? e.summary : '',
+				e.format.location ? callLinkOrLocation : '',
+				e.format.description && e.description ? `\n\t- ${e.description}` : '',
+		].filter(Boolean).join(' ').trim();
+}
+
 	async getEvents(date: string) : Promise<IEvent[]> {
 		let events: IEvent[] = [];
 		let errorMessages: string[] = []; // To store error messages
-	
+
 		for (const calendar in this.data.calendars) {
 			const calendarSetting = this.data.calendars[calendar];
 			let icsArray: any[] = [];
-	
+
 			// Exception handling for downloading
 			try {
 				icsArray = parseIcs(await request({
@@ -59,11 +78,11 @@ export default class ICSPlugin extends Plugin {
 			}
 
 			var dateEvents;
-	
+
 			// Exception handling for parsing and filtering
 			try {
 				dateEvents = filterMatchingEvents(icsArray, date);
-	
+
 			} catch (filterError) {
 				console.error(`Error filtering events for calendar ${calendarSetting.icsName}: ${filterError}`);
 				errorMessages.push(`Error filtering events in calendar "${calendarSetting.icsName}"`);
@@ -72,7 +91,7 @@ export default class ICSPlugin extends Plugin {
 			try {
 				dateEvents.forEach((e) => {
 					const { callUrl, callType } = extractMeetingInfo(e);
-	
+
 					let event: IEvent = {
 						utime: moment(e.start).format('X'),
 						time: moment(e.start).format(this.data.format.timeFormat),
@@ -92,15 +111,15 @@ export default class ICSPlugin extends Plugin {
 				errorMessages.push(`Error parsing events in calendar "${calendarSetting.icsName}"`);
 			}
 		}
-	
+
 		// Notify the user if any errors were encountered
 		if (errorMessages.length > 0) {
 			const message = `Encountered ${errorMessages.length} error(s) while processing calendars:\n\n${errorMessages.join('\n')}\nSee console for details.`;
 			new Notice(message);
 		}
-	
+
 		return events;
-	}	
+	}
 
 	async onload() {
 		await this.loadSettings();
@@ -112,18 +131,7 @@ export default class ICSPlugin extends Plugin {
 				const fileDate = getDateFromFile(view.file, "day").format("YYYY-MM-DD");
 				var events: any[] = await this.getEvents(fileDate);
 
-				const mdArray = events.sort((a,b) => a.utime - b.utime).map(e => {
-					const callLinkOrlocation = e.callType ? `[${e.callType}](${e.callUrl})` : e.location;
-					return [
-						`- ${e.format?.checkbox ? '[ ]' : ''}`,
-						`${e.time}`,
-						e.format?.includeEventEndTime ? `- ${e.endTime}` : null,
-						e.format?.icsName ? e.icsName : null,
-						e.format?.summary ? e.summary : null,
-						e.format?.location ? callLinkOrlocation : null,
-						e.format?.description && e.description ? `\n\t- ${e.description}` : null,
-					].filter(Boolean).join(' ')
-				});
+				const mdArray = events.sort((a,b) => a.utime - b.utime).map(this.formatEvent, this);
 				editor.replaceRange(mdArray.join("\n"), editor.getCursor());
 			}
 		});
