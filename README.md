@@ -18,7 +18,7 @@ This plugin is in the community plugin browser in Obsidian. Search for ICS and y
 2. Enter that URL into settings with a calendar name
 3. Customize your format settings. Some are per calendar, others are for all calendars.
    - Per calendar settings: Whether to include a checkbox, the event end time, the calendar name, event summary, event location, event description
-   - General output settings: Time [format](https://momentjs.com/docs/#/displaying/).
+   - General output settings: Time [format](https://momentjs.com/docs/#/displaying/) and emitting start and end as Dataview Metadata.
 
 ![Settings Screenshot](https://github.com/muness/obsidian-ics/blob/master/docs/2023-09-03-settings.png?raw=true)
 
