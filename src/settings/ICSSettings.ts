@@ -1,6 +1,7 @@
 export interface ICSSettings {
     format: {
         timeFormat: string
+        dataViewSyntax: boolean,
     },
     calendars: Record < string, Calendar > ;
 }
@@ -29,7 +30,8 @@ export const DEFAULT_CALENDAR_FORMAT = {
 
 export const DEFAULT_SETTINGS: ICSSettings = {
     format: {
-        timeFormat: "HH:mm"
+        timeFormat: "HH:mm",
+        dataViewSyntax: false,
     },
     calendars: {
     }
