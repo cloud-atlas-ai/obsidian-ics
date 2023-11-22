@@ -95,7 +95,7 @@ export default class ICSSettingsTab extends PluginSettingTab {
 					.setTooltip("Add Additional")
 					.setButtonText("+")
 					.onClick(async () => {
-						let modal = new SettingsModal(this.app);
+						let modal = new SettingsModal(this.app, this.plugin);
 
 						modal.onClose = async () => {
 							if (modal.saved) {
@@ -129,7 +129,7 @@ export default class ICSSettingsTab extends PluginSettingTab {
 					b.setIcon("pencil")
 						.setTooltip("Edit")
 						.onClick(() => {
-							let modal = new SettingsModal(this.app, calendar);
+							let modal = new SettingsModal(this.app, this.plugin, calendar);
 
 							modal.onClose = async () => {
 								if (modal.saved) {
@@ -166,9 +166,10 @@ export default class ICSSettingsTab extends PluginSettingTab {
 			.setDesc(this.timeFormattingDescription())
 			.addText((text) => {
 				timeFormat = text;
-				timeFormat.setValue(this.plugin.data.format.timeFormat).onChange((v) => {
+				timeFormat.setValue(this.plugin.data.format.timeFormat).onChange(async (v) => {
 					this.plugin.data.format.timeFormat = v;
 					this.updateTimeFormatExample();
+					await this.plugin.saveSettings();
 				});
 			});
 
@@ -177,7 +178,10 @@ export default class ICSSettingsTab extends PluginSettingTab {
 			.setDesc(this.dataViewSyntaxDescription())
 			.addToggle(toggle => toggle
 				.setValue(this.plugin.data.format.dataViewSyntax || false)
-				.onChange(value => this.plugin.data.format.dataViewSyntax = value));
+				.onChange(async (v) => {
+					this.plugin.data.format.dataViewSyntax = v;
+					await this.plugin.saveSettings();
+				}));
 
 		// Sponsor link - Thank you!
 		const divSponsor = containerEl.createDiv();
@@ -189,6 +193,7 @@ export default class ICSSettingsTab extends PluginSettingTab {
 
 
 class SettingsModal extends Modal {
+	plugin: ICSPlugin;
 	icsName: string = "";
 	icsUrl: string = "";
 
@@ -202,8 +207,9 @@ class SettingsModal extends Modal {
 		location: boolean,
 		description: boolean
 	} = DEFAULT_CALENDAR_FORMAT;
-	constructor(app: App, setting?: Calendar) {
+	constructor(app: App, plugin: ICSPlugin, setting?: Calendar) {
 		super(app);
+		this.plugin = plugin;
 		if (setting) {
 			this.icsName = setting.icsName;
 			this.icsUrl = setting.icsUrl;
@@ -309,6 +315,7 @@ class SettingsModal extends Modal {
 				.setIcon("checkmark")
 				.onClick(async () => {
 					this.saved = true;
+					await this.plugin.saveSettings();
 					this.close();
 				});
 			return b;
