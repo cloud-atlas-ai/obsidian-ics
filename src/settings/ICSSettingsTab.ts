@@ -6,6 +6,7 @@ import {
 	ButtonComponent,
 	Modal,
 	TextComponent,
+	DropdownComponent,
 } from "obsidian";
 
 import {
@@ -191,13 +192,19 @@ export default class ICSSettingsTab extends PluginSettingTab {
 			<a href='https://www.buymeacoffee.com/muness' target='_blank'><img height="36" src='https://cdn.buymeacoffee.com/uploads/profile_pictures/default/79D6B5/MC.png' border='0' alt='Buy Me a Book' /></a>
 		`
 	}
+
 }
+
+
 
 
 class SettingsModal extends Modal {
 	plugin: ICSPlugin;
 	icsName: string = "";
 	icsUrl: string = "";
+	urlSetting: Setting;
+	urlText: TextComponent;
+	urlDropdown: DropdownComponent;
 
 	saved: boolean = false;
 	error: boolean = false;
@@ -221,6 +228,13 @@ class SettingsModal extends Modal {
 		}
 	}
 
+
+	listIcsDirectories(): string[] {
+		const icsFiles = this.app.vault.getFiles().filter(f => f.extension === "ics");
+		const directories = new Set(icsFiles.map(f => f.parent.path));
+		return Array.from(directories);
+	}
+
 	display() {
 		let {
 			contentEl
@@ -231,30 +245,62 @@ class SettingsModal extends Modal {
 		const settingDiv = contentEl.createDiv();
 
 		let nameText: TextComponent;
-
-		const calnedarSetting = new Setting(settingDiv)
-			.setHeading().setName("Calendar Settings");
-
 		const nameSetting = new Setting(settingDiv)
 			.setName("Calendar Name")
-
 			.addText((text) => {
 				nameText = text;
-				nameText.setValue(this.icsName).onChange((v) => {
+				nameText.setValue(this.icsName).onChange(async (v) => {
 					this.icsName = v;
 				});
 			});
 
-		let urlText: TextComponent;
-		const urlSetting = new Setting(settingDiv)
-			.setName("Calendar URL")
-
-			.addText((text) => {
-				urlText = text;
-				urlText.setValue(this.icsUrl).onChange((v) => {
-					this.icsUrl = v;
-				});
+		const calendarTypeSetting = new Setting(settingDiv)
+			.setName('Calendar Type')
+			.setDesc('Select the type of calendar (Remote URL or vdir)')
+			.addDropdown(dropdown => {
+				dropdown.addOption('remote', 'Remote URL');
+				dropdown.addOption('vdir', 'vdir');
+				dropdown.setValue(this.calendarType)
+					.onChange(value => {
+						this.calendarType = value as 'remote' | 'vdir';
+						updateUrlSetting();
+					});
 			});
+
+		const urlSettingDiv = settingDiv.createDiv({ cls: 'url-setting-container' });
+
+		// Function to update URL setting
+		const updateUrlSetting = () => {
+			// First, remove the existing URL setting if it exists
+			settingDiv.querySelectorAll('.url-setting').forEach(el => el.remove());
+
+			let urlSetting = new Setting(urlSettingDiv)
+				.setName(this.calendarType === 'vdir' ? 'Directory' : 'Calendar URL');
+			urlSetting.settingEl.addClass('url-setting');
+
+			if (this.calendarType === 'vdir') {
+				// If vdir, add a dropdown
+				urlSetting.addDropdown(dropdown => {
+					const directories = this.listIcsDirectories();
+					directories.forEach(dir => {
+						dropdown.addOption(dir, dir);
+					});
+					dropdown.setValue(this.icsUrl).onChange(value => {
+						this.icsUrl = value;
+					});
+				});
+			} else {
+				// If remote, add a text input
+				urlSetting.addText(text => {
+					text.setValue(this.icsUrl).onChange(value => {
+						this.icsUrl = value;
+					});
+				});
+			}
+		};
+
+		// Call updateUrlSetting initially
+		updateUrlSetting();
 
 		const formatSetting = new Setting(settingDiv)
 			.setHeading().setName("Output Format");
@@ -265,18 +311,6 @@ class SettingsModal extends Modal {
 				this.format[f] = DEFAULT_CALENDAR_FORMAT[f];
 			}
 		}
-
-		const calendarTypeSetting = new Setting(contentEl)
-    .setName('Calendar Type')
-    .setDesc('Select the type of calendar (Remote URL or vdir)')
-    .addDropdown(dropdown => {
-        dropdown.addOption('remote', 'Remote URL');
-        dropdown.addOption('vdir', 'vdir');
-        dropdown.setValue(this.calendarType)
-            .onChange(value => {
-                this.calendarType = value as 'remote' | 'vdir';
-            });
-    });
 
 		const checkboxToggle = new Setting(settingDiv)
 			.setName('Checkbox')
