@@ -89,5 +89,5 @@ If for some reason you want to install the plugin manually:
 2. `npm install`
 3. Make the changes you want...
 4. `npm run dev` will watch for changes and build the plugin to `dist/main.js`.
-5. copy the `dist/main/js` to your Obdisian vault plugin folder (`cp dist/main.js <vault>/.obsidian/plugins/ics/`).
+5. copy the `dist/main.js` (or `dist/main-debug.js` if you want the un-minified version) to your Obdisian vault plugin folder (`cp dist/main.js <vault>/.obsidian/plugins/ics/main.js`).
 6. Reload the vault or use the [Hot Reload Plugin](https://github.com/pjeby/hot-reload).
