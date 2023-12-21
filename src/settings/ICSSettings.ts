@@ -9,6 +9,7 @@ export interface ICSSettings {
 export interface Calendar {
     icsUrl: string;
     icsName: string;
+    calendarType: 'remote' | 'vdir'; // Add this line
     format: {
         checkbox: boolean;
         includeEventEndTime: boolean;
@@ -26,6 +27,7 @@ export const DEFAULT_CALENDAR_FORMAT = {
     summary: true,
     location: true,
     description: false,
+    calendarType: 'remote', // Set the default type to 'remote'
 };
 
 export const DEFAULT_SETTINGS: ICSSettings = {

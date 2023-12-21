@@ -102,7 +102,8 @@ export default class ICSSettingsTab extends PluginSettingTab {
 								this.plugin.addCalendar({
 									icsName: modal.icsName,
 									icsUrl: modal.icsUrl,
-									format: modal.format
+									format: modal.format,
+									calendarType: modal.calendarType as 'remote' | 'vdir',
 								});
 								this.display();
 							}
@@ -137,7 +138,8 @@ export default class ICSSettingsTab extends PluginSettingTab {
 									this.plugin.addCalendar({
 										icsName: modal.icsName,
 										icsUrl: modal.icsUrl,
-										format: modal.format
+										format: modal.format,
+										calendarType: modal.calendarType as 'remote' | 'vdir',
 									});
 									this.display();
 								}
@@ -207,6 +209,7 @@ class SettingsModal extends Modal {
 		location: boolean,
 		description: boolean
 	} = DEFAULT_CALENDAR_FORMAT;
+	calendarType: string;
 	constructor(app: App, plugin: ICSPlugin, setting?: Calendar) {
 		super(app);
 		this.plugin = plugin;
@@ -214,6 +217,7 @@ class SettingsModal extends Modal {
 			this.icsName = setting.icsName;
 			this.icsUrl = setting.icsUrl;
 			this.format = setting.format || this.format // if format is undefined, use default
+			this.calendarType = setting.calendarType || 'remote';
 		}
 	}
 
@@ -261,6 +265,18 @@ class SettingsModal extends Modal {
 				this.format[f] = DEFAULT_CALENDAR_FORMAT[f];
 			}
 		}
+
+		const calendarTypeSetting = new Setting(contentEl)
+    .setName('Calendar Type')
+    .setDesc('Select the type of calendar (Remote URL or vdir)')
+    .addDropdown(dropdown => {
+        dropdown.addOption('remote', 'Remote URL');
+        dropdown.addOption('vdir', 'vdir');
+        dropdown.setValue(this.calendarType)
+            .onChange(value => {
+                this.calendarType = value as 'remote' | 'vdir';
+            });
+    });
 
 		const checkboxToggle = new Setting(settingDiv)
 			.setName('Checkbox')
