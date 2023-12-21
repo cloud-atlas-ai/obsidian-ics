@@ -67,15 +67,22 @@ export default class ICSPlugin extends Plugin {
 			const calendarSetting = this.data.calendars[calendar];
 			let icsArray: any[] = [];
 
-			// Exception handling for downloading
 			try {
-				icsArray = parseIcs(await request({
-					url: calendarSetting.icsUrl
-				}));
-			} catch (error) {
-				console.error(`Error retrieving calendar ${calendarSetting.icsName} with ICS URL ${calendarSetting.icsUrl}: ${error}`);
-				errorMessages.push(`Error retrieving calendar "${calendarSetting.icsName}"`);
-			}
+				if (calendarSetting.calendarType === 'vdir') {
+						// Assuming you have a method to list files in a directory
+						const icsFiles = app.vault.getFiles().filter(f => f.extension == "ics" && f.path.startsWith(calendarSetting.icsUrl));
+						for (const icsFile of icsFiles) {
+								const fileContent = await this.app.vault.read(icsFile);
+								icsArray = icsArray.concat(parseIcs(fileContent));
+						}
+				} else {
+						// Existing logic for remote URLs
+						icsArray = parseIcs(await request({ url: calendarSetting.icsUrl }));
+				}
+		} catch (error) {
+				console.error(`Error processing calendar ${calendarSetting.icsName}: ${error}`);
+				errorMessages.push(`Error processing calendar "${calendarSetting.icsName}"`);
+		}
 
 			var dateEvents;
 
