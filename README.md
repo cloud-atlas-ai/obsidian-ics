@@ -12,6 +12,21 @@ I highly recommend pairing this with the [Day Planner](https://github.com/ivan-l
 
 This plugin is in the community plugin browser in Obsidian. Search for ICS and you can install it from there.
 
+### Using BRAT
+
+If you want to try out beta releases, you can use the [BRAT](https://github.com/TfTHacker/obsidian42-brat) plugin.
+
+1. Install the BRAT plugin
+    1. Open `Settings` -> `Community Plugins`
+    2. Disable safe mode, if enabled
+    3. *Browse*, and search for "BRAT"
+    4. Install the latest version of **Obsidian42 - BRAT**
+2. Open BRAT settings (`Settings` -> `BRAT`)
+    1. Scroll to the `Beta Plugin List` section
+    2. `Add Beta Plugin`
+    3. Specify this repository: `cloud-atlas-ai/obsidian-ics`
+3. Enable the `Amazing Marvin` plugin (`Settings` -> `Community Plugins`)
+
 ## Setup
 
 1. From Google Calendar, look for the calendar in the left sidebar click the vertical … menu, Settings and Sharing, Integrate calendar, Copy the Secret address in iCal format
