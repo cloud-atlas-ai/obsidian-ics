@@ -14,7 +14,7 @@
   "license": "MIT",
   "overrides": {
     "node-ical": {
-      "rrule": "2.6.6"
+      "rrule": "2.6.8"
     }
   },
   "dependencies": {
