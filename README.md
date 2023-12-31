@@ -35,7 +35,7 @@ If you want to try out beta releases, you can use the [BRAT](https://github.com/
    - Per calendar settings: Whether to include a checkbox, the event end time, the calendar name, event summary, event location, event description
    - General output settings: Time [format](https://momentjs.com/docs/#/displaying/) and emitting start and end as Dataview Metadata.
 
-![Settings Screenshot](https://github.com/muness/obsidian-ics/blob/master/docs/2023-09-03-settings.png?raw=true)
+![Settings Screenshot](https://github.com/cloud-atlas-ai/obsidian-ics/blob/master/docs/2023-09-03-settings.png?raw=true)
 
 ### Usage
 
@@ -57,7 +57,7 @@ events.forEach((e) => {
 dv.list(dv.array(mdArray))```
 ```
 
-You can see the available fields in the [Event interface](https://github.com/muness/obsidian-ics/blob/master/src/IEvent.ts).
+You can see the available fields in the [Event interface](https://github.com/cloud-atlas-ai/obsidian-ics/blob/master/src/IEvent.ts).
 
 ### Templater
 
@@ -72,9 +72,9 @@ events.sort((a,b) => a.utime - b.utime).forEach((e) => {
 %>
 ```
 
-See [advanced Templated usage example](https://github.com/muness/obsidian-ics/discussions/74#discussion-5779931) for an example that demonstrates more features.
+See [advanced Templated usage example](https://github.com/cloud-atlas-ai/obsidian-ics/discussions/74#discussion-5779931) for an example that demonstrates more features.
 
-You can see the available fields in the [Event interface](https://github.com/muness/obsidian-ics/blob/master/src/IEvent.ts).
+You can see the available fields an the [Event interface](https://github.com/cloud-atlas-ai/obsidian-ics/blob/master/src/IEvent.ts).
 
 ## Support
 
