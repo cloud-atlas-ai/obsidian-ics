@@ -12,6 +12,11 @@
   "keywords": [],
   "author": "",
   "license": "MIT",
+  "overrides": {
+    "node-ical": {
+      "rrule": "2.6.6"
+    }
+  },
   "dependencies": {
     "moment-timezone": "^0.5.43",
     "node-ical": "^0.16.1",
