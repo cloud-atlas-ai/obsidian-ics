@@ -19,7 +19,7 @@
   },
   "dependencies": {
     "moment-timezone": "^0.5.43",
-    "node-ical": "^0.16.1",
+    "node-ical": "^0.17.1",
     "obsidian-daily-notes-interface": "^0.9.4"
   },
   "devDependencies": {
