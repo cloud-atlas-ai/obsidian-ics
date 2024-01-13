@@ -63,7 +63,7 @@ export default class ICSPlugin extends Plugin {
       e.format.summary ? e.summary : '',
       e.format.location ? callLinkOrLocation : '',
       e.format.description && e.description ? `\n\t- ${e.description}` : '',
-      e.attendees.length > 0 ? `\n\t- Attendees:\n${attendeeList}` : ''
+      e.format.showAttendees && e.attendees.length > 0 ? `\n\t- Attendees:\n${attendeeList}` : ''
     ].filter(Boolean).join(' ').trim();
   }
 
