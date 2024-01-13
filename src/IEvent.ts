@@ -11,11 +11,12 @@ export interface IEvent {
 	location: string; // Physical location where the event takes place, if applicable
 	callUrl: string; // URL for joining online meetings/calls associated with the event
 	callType: string; // Type of online meeting (e.g., Zoom, Skype, etc.)
-  guests: IGuest[]; // Array of guests attending the event
+  attendees: IAttendee[]; // Array of attendees
 }
 
-export interface IGuest {
-    name: string; // Name of the guest
-    email: string; // Email of the guest
-    status: string; // Participation status (e.g., "Accepted", "Declined")
+export interface IAttendee {
+  email: string;
+  name: string;
+  role: string;
+  status: string; // Participation status (accepted, declined, etc.)
 }

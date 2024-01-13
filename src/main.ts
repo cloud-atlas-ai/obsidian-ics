@@ -20,7 +20,7 @@ import {
   request
 } from 'obsidian';
 import { parseIcs, filterMatchingEvents, extractMeetingInfo } from './icalUtils';
-import { IEvent, IGuest } from './IEvent';
+import { IEvent, IAttendee } from './IEvent';
 
 export default class ICSPlugin extends Plugin {
   data: ICSSettings;
@@ -42,7 +42,13 @@ export default class ICSPlugin extends Plugin {
 
   formatEvent(e: IEvent): string {
     const callLinkOrLocation = e.callType ? `[${e.callType}](${e.callUrl})` : e.location;
-    const guestListFormatted = e.guests.map(guest => `\t\t- ${guest.name} (${guest.email}): ${guest.status}`).join('\n');
+    const attendeeList = e.attendees.map(attendee => {
+      // Check if the name and the email are identical
+      const displayName = attendee.name === attendee.email
+        ? attendee.name  // If identical, use only one of them
+        : `${attendee.name} (${attendee.email})`; // If not, use both
+      return `\t\t- ${displayName}: ${attendee.status}`;
+    }).join('\n');
 
     // Conditionally format start and end time based on dataViewSyntax setting
     const startTimeFormatted = this.data.format.dataViewSyntax ? `[startTime:: ${e.time}]` : `${e.time}`;
@@ -57,7 +63,7 @@ export default class ICSPlugin extends Plugin {
       e.format.summary ? e.summary : '',
       e.format.location ? callLinkOrLocation : '',
       e.format.description && e.description ? `\n\t- ${e.description}` : '',
-      e.guests.length > 0 ? `\n\t- Guests:\n${guestListFormatted}` : ''
+      e.attendees.length > 0 ? `\n\t- Attendees:\n${attendeeList}` : ''
     ].filter(Boolean).join(' ').trim();
   }
 
@@ -101,25 +107,7 @@ export default class ICSPlugin extends Plugin {
         dateEvents.forEach((e) => {
           const { callUrl, callType } = extractMeetingInfo(e);
 
-          let guests: IGuest[] = [];
-          if (e.attendee) {
-            if (Array.isArray(e.attendee)) {
-              guests = e.attendee.map(att => {
-                return {
-                  name: att.params.CN,
-                  email: att.val.substring(7), // Remove 'mailto:' prefix
-                  status: att.params.PARTSTAT
-                };
-              });
-            } else {
-              guests.push({
-                name: e.attendee.params.CN,
-                email: e.attendee.val.substring(7), // Remove 'mailto:' prefix
-                status: e.attendee.params.PARTSTAT
-              });
-            }
-          }
-          let event: IEvent = {
+          const event: IEvent = {
             utime: moment(e.start).format('X'),
             time: moment(e.start).format(this.data.format.timeFormat),
             endTime: moment(e.end).format(this.data.format.timeFormat),
@@ -130,7 +118,12 @@ export default class ICSPlugin extends Plugin {
             location: e.location ? e.location : null,
             callUrl: callUrl,
             callType: callType,
-            guests: guests
+            attendees: e.attendee ? (Array.isArray(e.attendee) ? e.attendee : [e.attendee]).map(attendee => ({
+              name: attendee.params.CN,
+              email: attendee.val.substring(7),
+              status: attendee.params.PARTSTAT,
+              role: attendee.params.ROLE
+            })) : []
           };
           events.push(event);
         });
