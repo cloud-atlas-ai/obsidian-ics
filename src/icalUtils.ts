@@ -48,11 +48,11 @@ export function filterMatchingEvents(icsArray: any[], dayToMatch: string) {
 				if (moment(date).isSame(dayToMatch, "day")) {
 					hasRecurrenceOverride = true;
 				}
-
-				const recurrence = event.recurrences[date];
-				if (moment(recurrence.start).isSame(dayToMatch, "day")) {
-					matchingEvents.push(recurrence);
-				}
+        const recurrence = event.recurrences[date];
+        if (moment(recurrence.start).isSame(dayToMatch, "day")) {
+          matchingEvents.push(recurrence);
+          hasRecurrenceOverride = true;
+        }
 			}
 		}
 		if (typeof event.rrule !== 'undefined' && !hasRecurrenceOverride) {
