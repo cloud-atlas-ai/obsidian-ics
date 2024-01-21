@@ -39,7 +39,6 @@ function adjustDateToOriginalTimezone(originalDate: Date, currentDate: Date, tzi
 }
 
 export function filterMatchingEvents(icsArray: any[], dayToMatch: string) {
-	const localTimeZone = tz.zone(tz.guess());
 
 	return icsArray.reduce((matchingEvents, event) => {
 		var hasRecurrenceOverride = false
@@ -56,13 +55,22 @@ export function filterMatchingEvents(icsArray: any[], dayToMatch: string) {
 			}
 		}
 		if (typeof event.rrule !== 'undefined' && !hasRecurrenceOverride) {
-			event.rrule.between(moment(dayToMatch).startOf('day').toDate(), moment(dayToMatch).endOf('day').toDate()).forEach(date => {
-				// We need to clone the event and override the date
 
+      // Per the rrule docs: Whether or not you use the `TZID` param, make sure to only use JS `Date` objects that are represented in UTC to avoid unexpected timezone offsets being applied
+      const utcStartOfDay = moment(dayToMatch).utc().startOf('day').toDate();
+      const utcEndOfDay = moment(dayToMatch).utc().endOf('day').toDate();
+
+			event.rrule.between(utcStartOfDay, utcEndOfDay).forEach(date => {
+
+        // now the date is in the local timezone, so we need to apply the offset to get it back to UTC
+        const offset = moment(date).utcOffset();
+        date = moment(date).subtract(offset, 'minutes').toDate();
+
+
+				// We need to clone the event and override the date
 				const clonedEvent = { ...event };
 
 				console.debug('Found a recurring event to clone: ', event.summary, ' on ', date, 'at ', event.start.toString());
-				console.debug("RRULE origOptions:", event.rrule.origOptions);
 
 				// But timezones...
 				if (event.rrule != undefined && event.rrule.origOptions.tzid) {
