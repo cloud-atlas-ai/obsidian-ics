@@ -39,6 +39,8 @@ function adjustDateToOriginalTimezone(originalDate: Date, currentDate: Date, tzi
 }
 
 export function filterMatchingEvents(icsArray: any[], dayToMatch: string) {
+  const localStartOfDay = moment(dayToMatch).startOf('day');
+  const localEndOfDay = moment(dayToMatch).endOf('day');
 
 	return icsArray.reduce((matchingEvents, event) => {
 		var hasRecurrenceOverride = false
@@ -60,7 +62,7 @@ export function filterMatchingEvents(icsArray: any[], dayToMatch: string) {
       const utcStartOfDay = moment(dayToMatch).utc().startOf('day').toDate();
       const utcEndOfDay = moment(dayToMatch).utc().endOf('day').toDate();
 
-			event.rrule.between(utcStartOfDay, utcEndOfDay).forEach(date => {
+			event.rrule.between(localStartOfDay.toDate(), localEndOfDay.toDate()).forEach(date => {
 
         // now the date is in the local timezone, so we need to apply the offset to get it back to UTC
         const offset = moment(date).utcOffset();
