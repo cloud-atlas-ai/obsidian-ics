@@ -41,15 +41,14 @@ If you want to try out beta releases, you can use the [BRAT](https://github.com/
 
 Go to a daily note, use the `ICS: Import events` command.
 
-For customizations not available to the formatting, use Dataview or Templater (see below). Likewise, if you want to automatically import events when you create your daily notes, you'll want to use one of those.
+For customizations not available to the formatting, use Dataview or Templater (see below). Likewise, if you want to automatically import events when you create your daily notes, you'll want to use one of those. If you have issues using Data view or Templater, test that your calendar imports works using the `ICS: Import events` command as there's more error handling available there.
 
 ### Data view usage
 
 You can also use a [Dataview](https://blacksmithgu.github.io/obsidian-dataview/) to add your events to your journal notes when they get created. For examples, if you use the core Templates plugin you can add the following to add events to your daily note template:
 
-```javascript
 ```dataviewjs
-var events = await app.plugins.getPlugin('ics').getEvents("{{date:YYYY-MM-DD}}");
+var events = await app.plugins.getPlugin('ics').getEvents(dv.current().file.day);
 var mdArray = [];
 events.forEach((e) => {
   mdArray.push(`${e.time} ${e.summary} ${e.location}: ${e.description}`.trim())
