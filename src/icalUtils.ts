@@ -38,8 +38,7 @@ function adjustDateToOriginalTimezone(originalDate: Date, currentDate: Date, tzi
   return momentCurrent.add(hourOffset, 'hours').add(minuteOffset, 'minutes').toDate();
 }
 
-export function filterMatchingEvents(icsArray: any[], dayToMatch: string) {
-
+export function filterMatchingEvents(icsArray: any[], dayToMatch: string, showOngoing: boolean) {
   return icsArray.reduce((matchingEvents, event) => {
     var hasRecurrenceOverride = false
     if (event.recurrences !== undefined) {
@@ -103,6 +102,13 @@ export function filterMatchingEvents(icsArray: any[], dayToMatch: string) {
         matchingEvents.push(event);
       }
     }
+
+    if (showOngoing) {
+      if (moment(dayToMatch).isBetween(moment(event.start), moment(event.end), "day")) {
+        matchingEvents.push(event);
+      }
+    }
+
     return matchingEvents;
   }, []);;
 }

@@ -18,6 +18,7 @@ export interface Calendar {
         location: boolean;
         description: boolean;
         showAttendees: boolean;
+        showOngoing: boolean;
     }
 }
 
@@ -30,6 +31,7 @@ export const DEFAULT_CALENDAR_FORMAT = {
     description: false,
     calendarType: 'remote', // Set the default type to 'remote'
     showAttendees: false,
+    showOngoing: false,
 };
 
 export const DEFAULT_SETTINGS: ICSSettings = {
