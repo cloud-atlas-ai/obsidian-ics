@@ -149,8 +149,17 @@ export default class ICSPlugin extends Plugin {
       id: "import_events",
       name: "import events",
       editorCallback: async (editor: Editor, view: MarkdownView) => {
-        const fileDate = getDateFromFile(view.file, "day").format("YYYY-MM-DD");
-        var events: any[] = await this.getEvents(fileDate);
+        let fileDate = "";
+
+        try {
+          fileDate = getDateFromFile(view.file, "day").format("YYYY-MM-DD");
+        } catch(error) {
+          const message = "⚠️ Unable to get valid date from filename. ICS only works with daily notes."
+          new Notice(message);
+          return;
+        }
+
+        const events: any[] = await this.getEvents(fileDate);
 
         const mdArray = events.sort((a, b) => a.utime - b.utime).map(this.formatEvent, this);
         editor.replaceRange(mdArray.join("\n"), editor.getCursor());
