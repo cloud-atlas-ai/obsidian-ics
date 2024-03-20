@@ -215,7 +215,8 @@ class SettingsModal extends Modal {
     summary: boolean,
     location: boolean,
     description: boolean,
-    showAttendees: boolean
+    showAttendees: boolean,
+    showOngoing: boolean
   } = DEFAULT_CALENDAR_FORMAT;
   calendarType: string;
   constructor(app: App, plugin: ICSPlugin, setting?: Calendar) {
@@ -366,6 +367,15 @@ class SettingsModal extends Modal {
         .setValue(this.format.showAttendees || false) // Use the new property
         .onChange(value => {
           this.format.showAttendees = value; // Set the new property
+        }));
+
+    const showOngoingToggle = new Setting(settingDiv)
+      .setName('Show Ongoing')
+      .setDesc('Display multi-day events that include target date')
+      .addToggle(toggle => toggle
+        .setValue(this.format.showOngoing || true) // Use the new property
+        .onChange(value => {
+          this.format.showOngoing = value; // Set the new property
         }));
 
     let footerEl = contentEl.createDiv();

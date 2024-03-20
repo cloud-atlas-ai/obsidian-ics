@@ -96,7 +96,7 @@ export default class ICSPlugin extends Plugin {
 
       // Exception handling for parsing and filtering
       try {
-        dateEvents = filterMatchingEvents(icsArray, date);
+        dateEvents = filterMatchingEvents(icsArray, date, calendarSetting.format.showOngoing);
 
       } catch (filterError) {
         console.error(`Error filtering events for calendar ${calendarSetting.icsName}: ${filterError}`);
