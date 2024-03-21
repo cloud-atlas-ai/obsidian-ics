@@ -373,7 +373,7 @@ class SettingsModal extends Modal {
       .setName('Show Ongoing')
       .setDesc('Display multi-day events that include target date')
       .addToggle(toggle => toggle
-        .setValue(this.format.showOngoing || true) // Use the new property
+        .setValue(this.format.showOngoing || false) // Use the new property
         .onChange(value => {
           this.format.showOngoing = value; // Set the new property
         }));
