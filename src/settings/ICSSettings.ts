@@ -2,6 +2,7 @@ export interface ICSSettings {
     format: {
         timeFormat: string
         dataViewSyntax: boolean,
+        notificationLevel: 'none' | 'light' | 'verbose';
     },
     calendars: Record < string, Calendar > ;
 }
@@ -38,6 +39,7 @@ export const DEFAULT_SETTINGS: ICSSettings = {
     format: {
         timeFormat: "HH:mm",
         dataViewSyntax: false,
+        notificationLevel: 'none'
     },
     calendars: {
     }

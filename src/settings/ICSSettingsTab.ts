@@ -74,6 +74,28 @@ export default class ICSSettingsTab extends PluginSettingTab {
     return descEl;
   }
 
+  private notificationLevelDescription(): DocumentFragment {
+    const descEl = document.createDocumentFragment();
+    descEl.appendText('Choose how many notifications you want ICS to display.');
+    descEl.appendChild(document.createElement('br'));
+    descEl.appendChild(document.createElement('br'));
+
+    const noneB = descEl.appendChild(document.createElement('b'));
+    noneB.appendText('None: ');
+    descEl.appendText('No notifications.');
+
+    descEl.appendChild(document.createElement('br'));
+    const lightB = descEl.appendChild(document.createElement('b'));
+    lightB.appendText('Light: ');
+    descEl.appendText('When starting and finishing overall download.');
+    descEl.appendChild(document.createElement('br'));
+
+    const verboseB = descEl.appendChild(document.createElement('b'));
+    verboseB.appendText('Verbose: ');
+    descEl.appendText('Overall + per calendar download notifications.');
+    return descEl;
+  }
+
   display(): void {
     let {
       containerEl
@@ -185,6 +207,22 @@ export default class ICSSettingsTab extends PluginSettingTab {
           this.plugin.data.format.dataViewSyntax = v;
           await this.plugin.saveSettings();
         }));
+
+    const notificationLevelSetting = new Setting(containerEl)
+      .setName('Notification Level')
+      .setDesc(this.notificationLevelDescription())
+      .addDropdown((component) => {
+        component
+            .addOption('none', 'None')
+            .addOption('light', 'Light')
+            .addOption('verbose', 'Verbose')
+          .setValue(this.plugin.data.format.notificationLevel || 'none')
+          .onChange(async (v) => {
+              this.plugin.data.format.notificationLevel = v as 'none' | 'light' | 'verbose';
+              await this.plugin.saveSettings();
+            });
+        });
+  
 
     // Sponsor link - Thank you!
     const divSponsor = containerEl.createDiv();
