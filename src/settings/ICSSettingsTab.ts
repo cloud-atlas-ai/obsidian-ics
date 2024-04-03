@@ -403,8 +403,6 @@ class SettingsModal extends Modal {
       b.setTooltip("Save")
         .setIcon("save")
         .onClick(async () => {
-          console.log(this.format);
-          console.log('saving...');
           await this.plugin.saveSettings();
           this.saved = true;
           this.hasChanges = false;
