@@ -153,7 +153,7 @@ export default class ICSPlugin extends Plugin {
 
         try {
           fileDate = getDateFromFile(view.file, "day").format("YYYY-MM-DD");
-        } catch(error) {
+        } catch (error) {
           const message = "⚠️ Unable to get valid date from filename. ICS only works with daily notes."
           new Notice(message);
           return;
@@ -177,6 +177,7 @@ export default class ICSPlugin extends Plugin {
 
   async saveSettings() {
     await this.saveData(this.data);
+    await this.loadSettings(); // Reload settings to ensure the plugin state is updated
   }
 }
 

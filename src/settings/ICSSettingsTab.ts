@@ -117,9 +117,10 @@ export default class ICSSettingsTab extends PluginSettingTab {
       });
 
     const additional = calendarContainer.createDiv("calendar");
-    for (let a in this.plugin.data.calendars) {
-      const calendar = this.plugin.data.calendars[a];
 
+    const sortedCalendarKeys = Object.keys(this.plugin.data.calendars).sort();
+    for (let calendarKey of sortedCalendarKeys) {
+      const calendar = this.plugin.data.calendars[calendarKey];
       let setting = new Setting(additional);
 
       let calEl = getCalendarElement(
@@ -196,8 +197,6 @@ export default class ICSSettingsTab extends PluginSettingTab {
 }
 
 
-
-
 class SettingsModal extends Modal {
   plugin: ICSPlugin;
   icsName: string = "";
@@ -208,6 +207,8 @@ class SettingsModal extends Modal {
 
   saved: boolean = false;
   error: boolean = false;
+  private hasChanges: boolean = false;
+
   format: {
     checkbox: boolean,
     includeEventEndTime: boolean,
@@ -225,7 +226,7 @@ class SettingsModal extends Modal {
     if (setting) {
       this.icsName = setting.icsName;
       this.icsUrl = setting.icsUrl;
-      this.format = setting.format || this.format // if format is undefined, use default
+      this.format = setting.format;
       this.calendarType = setting.calendarType || 'remote';
     }
   }
@@ -244,8 +245,7 @@ class SettingsModal extends Modal {
 
     contentEl.empty();
 
-    const settingDiv = contentEl.createDiv();
-    settingDiv.addClass('ics-settings');
+    const settingDiv = contentEl.createDiv({ cls: 'ics-settings' });
 
     let nameText: TextComponent;
     const nameSetting = new Setting(settingDiv)
@@ -290,6 +290,7 @@ class SettingsModal extends Modal {
           });
           dropdown.setValue(this.icsUrl).onChange(value => {
             this.icsUrl = value;
+            this.hasChanges = true;
           });
         });
       } else {
@@ -297,6 +298,7 @@ class SettingsModal extends Modal {
         urlSetting.addText(text => {
           text.setValue(this.icsUrl).onChange(value => {
             this.icsUrl = value;
+            this.hasChanges = true
           });
         });
       }
@@ -305,7 +307,7 @@ class SettingsModal extends Modal {
     // Call updateUrlSetting initially
     updateUrlSetting();
 
-    const formatSetting = new Setting(settingDiv)
+    new Setting(settingDiv)
       .setHeading().setName("Output Format");
 
     // set each of the calendar format settings to the default if it's undefined
@@ -319,74 +321,93 @@ class SettingsModal extends Modal {
       .setName('Checkbox')
       .setDesc('Use a checkbox for each event (will be a bullet otherwise)')
       .addToggle(toggle => toggle
-        .setValue(this.format.checkbox || DEFAULT_CALENDAR_FORMAT.checkbox)
-        .onChange(value => this.format.checkbox = value));
+        .setValue(this.format.checkbox)
+        .onChange(value => {
+          this.format.checkbox = value
+          this.hasChanges = true;
+        }));
 
     const endTimeToggle = new Setting(settingDiv)
       .setName('End time')
       .setDesc('Include the event\'s end time')
       .addToggle(toggle => toggle
-        .setValue(this.format.includeEventEndTime || DEFAULT_CALENDAR_FORMAT.includeEventEndTime)
-        .onChange(value => this.format.includeEventEndTime = value));
+        .setValue(this.format.includeEventEndTime)
+        .onChange(value => {
+          this.format.includeEventEndTime = value;
+          this.hasChanges = true;
+        }));
 
     const icsNameToggle = new Setting(settingDiv)
       .setName('Calendar name')
       .setDesc('Include the calendar name')
       .addToggle(toggle => toggle
-        .setValue(this.format.icsName || DEFAULT_CALENDAR_FORMAT.icsName)
-        .onChange(value => this.format.icsName = value));
+        .setValue(this.format.icsName)
+        .onChange(value => {
+          this.format.icsName = value
+          this.hasChanges = true;
+        }));
 
     const summaryToggle = new Setting(settingDiv)
       .setName('Summary')
       .setDesc('Include the summary field')
       .addToggle(toggle => toggle
-        .setValue(this.format.summary || DEFAULT_CALENDAR_FORMAT.summary)
+        .setValue(this.format.summary)
         .onChange(value => {
           this.format.summary = value;
+          this.hasChanges = true;
         }));
 
     const locationToggle = new Setting(settingDiv)
       .setName('Location')
       .setDesc('Include the location field')
       .addToggle(toggle => toggle
-        .setValue(this.format.location || DEFAULT_CALENDAR_FORMAT.location)
+        .setValue(this.format.location)
         .onChange(value => {
           this.format.location = value;
+          this.hasChanges = true;
         }));
 
     const descriptionToggle = new Setting(settingDiv)
       .setName('Description')
       .setDesc('Include the description field ')
       .addToggle(toggle => toggle
-        .setValue(this.format.description || DEFAULT_CALENDAR_FORMAT.description)
-        .onChange(value => this.format.description = value));
+        .setValue(this.format.description)
+        .onChange(value => {
+          this.format.description = value
+          this.hasChanges = true;
+        }));
 
     const showAttendeesToggle = new Setting(settingDiv)
       .setName('Show Attendees')
       .setDesc('Display attendees for the event')
       .addToggle(toggle => toggle
-        .setValue(this.format.showAttendees || DEFAULT_CALENDAR_FORMAT.showAttendees)
+        .setValue(this.format.showAttendees)
         .onChange(value => {
           this.format.showAttendees = value;
+          this.hasChanges = true;
         }));
 
     const showOngoingToggle = new Setting(settingDiv)
       .setName('Show Ongoing')
       .setDesc('Display multi-day events that include target date')
       .addToggle(toggle => toggle
-        .setValue(this.format.showOngoing || DEFAULT_CALENDAR_FORMAT.showOngoing)
+        .setValue(this.format.showOngoing)
         .onChange(value => {
           this.format.showOngoing = value;
+          this.hasChanges = true;
         }));
 
     let footerEl = contentEl.createDiv();
     let footerButtons = new Setting(footerEl);
     footerButtons.addButton((b) => {
       b.setTooltip("Save")
-        .setIcon("checkmark")
+        .setIcon("save")
         .onClick(async () => {
-          this.saved = true;
+          console.log(this.format);
+          console.log('saving...');
           await this.plugin.saveSettings();
+          this.saved = true;
+          this.hasChanges = false;
           this.close();
         });
       return b;
@@ -401,8 +422,20 @@ class SettingsModal extends Modal {
       return b;
     });
   }
+
   onOpen() {
     this.display();
+  }
+
+  close() {
+    if (this.hasChanges) {
+      const confirmDiscard = confirm('You have unsaved changes. Are you sure you want to discard them?');
+      if (!confirmDiscard) {
+        return; // Prevent the modal from closing
+      }
+      this.plugin.loadSettings();
+    }
+    super.close();
   }
 
   static setValidationError(textInput: TextComponent, message?: string) {
