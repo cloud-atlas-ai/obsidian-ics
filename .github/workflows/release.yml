@@ -28,6 +28,7 @@ jobs:
         npm run dev-build --if-present
         mkdir ${{ env.PLUGIN_NAME }}
         cp manifest.json dist/
+        cp styles.css dist/
         cp dist/main.js dist/manifest.json ${{ env.PLUGIN_NAME }}
         zip -r ${{ env.PLUGIN_NAME }}.zip ${{ env.PLUGIN_NAME }}
         ls dist/
@@ -39,4 +40,4 @@ jobs:
         gh release create "$tag" \
             --title="$tag" \
             --draft \
-            dist/main.js dist/manifest.json dist/main-debug.js ${{ env.PLUGIN_NAME }}.zip
+            dist/main.js dist/styles.css dist/manifest.json dist/main-debug.js ${{ env.PLUGIN_NAME }}.zip

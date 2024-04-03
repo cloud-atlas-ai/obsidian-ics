@@ -245,6 +245,7 @@ class SettingsModal extends Modal {
     contentEl.empty();
 
     const settingDiv = contentEl.createDiv();
+    settingDiv.addClass('ics-settings');
 
     let nameText: TextComponent;
     const nameSetting = new Setting(settingDiv)
@@ -318,28 +319,28 @@ class SettingsModal extends Modal {
       .setName('Checkbox')
       .setDesc('Use a checkbox for each event (will be a bullet otherwise)')
       .addToggle(toggle => toggle
-        .setValue(this.format.checkbox || false)
+        .setValue(this.format.checkbox || DEFAULT_CALENDAR_FORMAT.checkbox)
         .onChange(value => this.format.checkbox = value));
 
     const endTimeToggle = new Setting(settingDiv)
       .setName('End time')
       .setDesc('Include the event\'s end time')
       .addToggle(toggle => toggle
-        .setValue(this.format.includeEventEndTime || false)
+        .setValue(this.format.includeEventEndTime || DEFAULT_CALENDAR_FORMAT.includeEventEndTime)
         .onChange(value => this.format.includeEventEndTime = value));
 
     const icsNameToggle = new Setting(settingDiv)
       .setName('Calendar name')
       .setDesc('Include the calendar name')
       .addToggle(toggle => toggle
-        .setValue(this.format.icsName || false)
+        .setValue(this.format.icsName || DEFAULT_CALENDAR_FORMAT.icsName)
         .onChange(value => this.format.icsName = value));
 
     const summaryToggle = new Setting(settingDiv)
       .setName('Summary')
       .setDesc('Include the summary field')
       .addToggle(toggle => toggle
-        .setValue(this.format.summary || false)
+        .setValue(this.format.summary || DEFAULT_CALENDAR_FORMAT.summary)
         .onChange(value => {
           this.format.summary = value;
         }));
@@ -348,7 +349,7 @@ class SettingsModal extends Modal {
       .setName('Location')
       .setDesc('Include the location field')
       .addToggle(toggle => toggle
-        .setValue(this.format.location || false)
+        .setValue(this.format.location || DEFAULT_CALENDAR_FORMAT.location)
         .onChange(value => {
           this.format.location = value;
         }));
@@ -357,25 +358,25 @@ class SettingsModal extends Modal {
       .setName('Description')
       .setDesc('Include the description field ')
       .addToggle(toggle => toggle
-        .setValue(this.format.description || false)
+        .setValue(this.format.description || DEFAULT_CALENDAR_FORMAT.description)
         .onChange(value => this.format.description = value));
 
     const showAttendeesToggle = new Setting(settingDiv)
       .setName('Show Attendees')
       .setDesc('Display attendees for the event')
       .addToggle(toggle => toggle
-        .setValue(this.format.showAttendees || false) // Use the new property
+        .setValue(this.format.showAttendees || DEFAULT_CALENDAR_FORMAT.showAttendees)
         .onChange(value => {
-          this.format.showAttendees = value; // Set the new property
+          this.format.showAttendees = value;
         }));
 
     const showOngoingToggle = new Setting(settingDiv)
       .setName('Show Ongoing')
       .setDesc('Display multi-day events that include target date')
       .addToggle(toggle => toggle
-        .setValue(this.format.showOngoing || false) // Use the new property
+        .setValue(this.format.showOngoing || DEFAULT_CALENDAR_FORMAT.showOngoing)
         .onChange(value => {
-          this.format.showOngoing = value; // Set the new property
+          this.format.showOngoing = value;
         }));
 
     let footerEl = contentEl.createDiv();
