@@ -53,7 +53,7 @@ var mdArray = [];
 events.forEach((e) => {
   mdArray.push(`${e.time} ${e.summary} ${e.location}: ${e.description}`.trim())
 })
-dv.list(dv.array(mdArray))```
+dv.list(dv.array(mdArray))
 ```
 
 You can see the available fields in the [Event interface](https://github.com/cloud-atlas-ai/obsidian-ics/blob/master/src/IEvent.ts).
