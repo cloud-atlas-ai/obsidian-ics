@@ -68,10 +68,20 @@ export default class ICSPlugin extends Plugin {
   }
 
   async getEvents(date: string): Promise<IEvent[]> {
+    if (
+      this.data.format.notificationLevel === 'light' ||
+      this.data.format.notificationLevel === 'verbose'
+    ) {
+      new Notice('ICS: Downloading calendars...');
+    }
+    
     let events: IEvent[] = [];
     let errorMessages: string[] = []; // To store error messages
 
     for (const calendar in this.data.calendars) {
+      if (this.data.format.notificationLevel === 'verbose') {
+        new Notice(`ICS: Downloading '${calendar}'...`);
+      }
       const calendarSetting = this.data.calendars[calendar];
       let icsArray: any[] = [];
 
@@ -135,10 +145,17 @@ export default class ICSPlugin extends Plugin {
 
     // Notify the user if any errors were encountered
     if (errorMessages.length > 0) {
-      const message = `Encountered ${errorMessages.length} error(s) while processing calendars:\n\n${errorMessages.join('\n')}\nSee console for details.`;
+      const message = `ICS: Encountered ${errorMessages.length} error(s) while processing calendars:\n\n${errorMessages.join('\n')}\nSee console for details.`;
       new Notice(message);
     }
 
+    if (
+      this.data.format.notificationLevel === 'light' ||
+      this.data.format.notificationLevel === 'verbose'
+    ) {
+      new Notice('ICS: Calendar download finished!');
+    }
+    
     return events;
   }
 
