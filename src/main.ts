@@ -111,6 +111,9 @@ export default class ICSPlugin extends Plugin {
             utime: moment(e.start).format('X'),
             time: moment(e.start).format(this.data.format.timeFormat),
             endTime: moment(e.end).format(this.data.format.timeFormat),
+            created: moment(e.created).format(this.data.format.timeFormat),
+            sequence: e.sequence || 0,
+            lastModified: e.lastmodified ? moment(e.lastmodified).format(this.data.format.timeFormat) : moment(e.created).format(this.data.format.timeFormat),
             icsName: calendarSetting.icsName,
             summary: e.summary,
             description: e.description,
@@ -118,11 +121,13 @@ export default class ICSPlugin extends Plugin {
             location: e.location ? e.location : null,
             callUrl: callUrl,
             callType: callType,
+            organizer: { email: e.organizer?.val.substring(7) || "", name: e.organizer?.params?.CN || "" },
             attendees: e.attendee ? (Array.isArray(e.attendee) ? e.attendee : [e.attendee]).map(attendee => ({
               name: attendee.params.CN,
               email: attendee.val.substring(7),
               status: attendee.params.PARTSTAT,
-              role: attendee.params.ROLE
+              role: attendee.params.ROLE,
+              type: attendee.params.CUTYPE || "INDIVIDUAL"
             })) : []
           };
           events.push(event);
@@ -180,5 +185,3 @@ export default class ICSPlugin extends Plugin {
     await this.loadSettings(); // Reload settings to ensure the plugin state is updated
   }
 }
-
-
