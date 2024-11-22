@@ -42,6 +42,7 @@ export function filterMatchingEvents(icsArray: any[], dayToMatch: string, showOn
 
   return icsArray.reduce((matchingEvents, event) => {
     var hasRecurrenceOverride = false
+
     if (event.recurrences !== undefined) {
       for (let date in event.recurrences) {
         if (moment(date).isSame(dayToMatch, "day")) {
@@ -85,6 +86,9 @@ export function filterMatchingEvents(icsArray: any[], dayToMatch: string, showOn
 
         // Remove rrule property from clonedEvent
         delete clonedEvent.rrule;
+
+        // pass through a flag to understand this event is a recurrent event
+        clonedEvent.recurrent = true;
 
         // Check if the event is really during 'today' in the local timezone
         const eventStartLocal = moment(clonedEvent.start);
