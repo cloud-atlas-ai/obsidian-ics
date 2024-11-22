@@ -4,9 +4,10 @@ export interface IEvent {
 	utime: string; // Unix timestamp representing the event start time
 	time: string; // Human-readable representation of the event start time
 	endTime: string; // Human-readable representation of the event end time
-	created: string; // Human-readable representation of the creation timestamp of the event
+	created: string; // Unix timestamp representation of the creation timestamp of the event
 	sequence: number; // The revision sequence number of the calendar component within a sequence of revisions.
-	lastModified: string; // Human-readable representation of when the event was last revised
+	lastModified: string; // Unix timestamp representation of when the event was last revised
+	recurrent: boolean; // Is true if this is a recurrent event
 	icsName: string; // Name of the calendar the event is associated with
 	summary: string; // Summary or title of the event
 	description: string; // Detailed description of the event
