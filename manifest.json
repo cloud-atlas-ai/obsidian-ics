@@ -1,8 +1,8 @@
 {
   "id": "ics",
   "name": "ICS",
-  "version": "1.6.6.1",
-  "minAppVersion": "1.5.11",
+  "version": "1.6.7",
+  "minAppVersion": "1.7.7",
   "description": "Parse multiple ICS files to include in your notes. Designed for Daily Notes and the Day Planner format. Through templates you can customize it for other use cases.",
   "author": "Cloud Atlas",
   "authorUrl": "https://cloud-atlas.ai",
