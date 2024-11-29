@@ -87,6 +87,7 @@ If you want to support my work, you can [buy me a coffee](https://www.buymeacoff
 - [Allow plugin to run on mobile](https://github.com/muness/obsidian-ics/pull/46) @TopherMan
 - [Implement customizable output format for events](https://github.com/muness/obsidian-ics/pull/55) @GoBeromsu
 - [Documenting Dataview usage](https://github.com/muness/obsidian-ics/issues/56#issuecomment-1746417368) @afonsoguerra
+- [Vdir enhancements](https://github.com/cloud-atlas-ai/obsidian-ics/pull/131) @bpannier
 
 ## Manual Installation
 
