@@ -98,6 +98,15 @@ export default class ICSPlugin extends Plugin {
       try {
         dateEvents = filterMatchingEvents(icsArray, date, calendarSetting.format.showOngoing);
 
+        // Exclude transparent events
+        dateEvents = dateEvents.filter(event => {
+          if (event.transparency && event.transparency.toUpperCase() === "TRANSPARENT") {
+            console.debug(`Excluding transparent event: ${event.summary}`);
+            return false;
+          }
+          return true;
+        });
+
       } catch (filterError) {
         console.error(`Error filtering events for calendar ${calendarSetting.icsName}: ${filterError}`);
         errorMessages.push(`Error filtering events in calendar "${calendarSetting.icsName}"`);
@@ -168,7 +177,7 @@ export default class ICSPlugin extends Plugin {
         const events: any[] = await this.getEvents(fileDate);
 
         const mdArray = events.sort((a, b) => a.utime - b.utime).map(this.formatEvent, this);
-        editor.replaceRange(mdArray.join("\n"), editor.getCursor());
+        editor.replaceRange(mdArray.join("\n").concat("\n"), editor.getCursor());
       }
     });
   }
