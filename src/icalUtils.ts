@@ -38,84 +38,116 @@ function adjustDateToOriginalTimezone(originalDate: Date, currentDate: Date, tzi
   return momentCurrent.add(hourOffset, 'hours').add(minuteOffset, 'minutes').toDate();
 }
 
+function isExcluded(recurrenceDate: moment.Moment, exdateArray: moment.Moment[]): boolean {
+  return exdateArray.some(exDate => exDate.isSame(recurrenceDate, 'day'));
+}
+
+function processRecurrenceOverrides(event: any, dayToMatch: string, excludedDates: moment.Moment[], matchingEvents: any[]) {
+  for (const date in event.recurrences) {
+    const recurrence = event.recurrences[date];
+    const recurrenceMoment = moment(date).startOf('day');
+
+    if (isExcluded(recurrenceMoment, excludedDates)) {
+      console.debug(`Skipping excluded recurrence override: ${recurrence.summary} on ${recurrenceMoment.format('YYYY-MM-DD')}`);
+      continue;
+    }
+
+    if (recurrence.status && recurrence.status.toUpperCase() === "CANCELLED") {
+      console.debug(`Skipping canceled recurrence: ${recurrence.summary} on ${date}`);
+      continue;
+    }
+
+    if (moment(recurrence.start).isSame(dayToMatch, "day")) {
+      console.debug(`Adding recurring event with override: ${recurrence.summary} on ${recurrenceMoment.format('YYYY-MM-DD')} ${recurrence}`);
+      console.debug(recurrence);
+      matchingEvents.push(recurrence);
+    }
+  }
+}
+
+function processRecurringRules(event: any, dayToMatch: string, excludedDates: moment.Moment[], matchingEvents: any[]) {
+  const localStartOfYesterday = moment(dayToMatch).subtract(1, 'day').startOf('day').toDate();
+  const localEndOfTomorrow = moment(dayToMatch).add(1, 'day').endOf('day').toDate();
+
+  event.rrule.between(localStartOfYesterday, localEndOfTomorrow).forEach(recurrenceDate => {
+    const recurrenceMoment = moment(recurrenceDate).startOf('day');
+
+    if (isExcluded(recurrenceMoment, excludedDates)) {
+      console.debug(`Skipping excluded recurrence: ${event.summary} on ${recurrenceMoment.format('YYYY-MM-DD')}`);
+      return;
+    }
+
+    const adjustedRecurrenceDate = tz(recurrenceMoment.toDate(), event.rrule.origOptions.tzid || 'UTC').toDate();
+    const clonedEvent = { ...event };
+
+    if (event.rrule.origOptions.tzid) {
+      const tzid = event.rrule.origOptions.tzid;
+      clonedEvent.start = adjustDateToOriginalTimezone(event.start, adjustedRecurrenceDate, tzid);
+      clonedEvent.end = adjustDateToOriginalTimezone(event.end, adjustedRecurrenceDate, tzid);
+    } else {
+      clonedEvent.start = new Date(adjustedRecurrenceDate);
+      clonedEvent.end = new Date(adjustedRecurrenceDate.getTime() + (event.end.getTime() - event.start.getTime()));
+    }
+
+    delete clonedEvent.rrule;
+    clonedEvent.recurrent = true;
+
+    if (moment(clonedEvent.start).isSame(dayToMatch, 'day')) {
+      console.debug(`Adding recurring event: ${clonedEvent.summary} on ${recurrenceMoment.format('YYYY-MM-DD')} ${clonedEvent}`);
+      console.debug(clonedEvent);
+      matchingEvents.push(clonedEvent);
+    }
+  });
+}
+
+function shouldIncludeOngoing(event: any, dayToMatch: string): boolean {
+  return moment(dayToMatch).isBetween(moment(event.start), moment(event.end), "day");
+}
+
 export function filterMatchingEvents(icsArray: any[], dayToMatch: string, showOngoing: boolean) {
-
   return icsArray.reduce((matchingEvents, event) => {
-    var hasRecurrenceOverride = false
-
-    if (event.recurrences !== undefined) {
-      for (let date in event.recurrences) {
-        if (moment(date).isSame(dayToMatch, "day")) {
-          hasRecurrenceOverride = true;
-        }
-        const recurrence = event.recurrences[date];
-        if (moment(recurrence.start).isSame(dayToMatch, "day")) {
-          matchingEvents.push(recurrence);
-          hasRecurrenceOverride = true;
-        }
-      }
+    // Skip canceled parent events
+    if (event.status && event.status.toUpperCase() === "CANCELLED") {
+      console.debug(`Skipping canceled event: ${event.summary}`);
+      return matchingEvents;
     }
-    if (typeof event.rrule !== 'undefined' && !hasRecurrenceOverride) {
-      // Fetch events from yesterday to tomorrow
-      const localStartOfYesterday = moment(dayToMatch).subtract(1, 'day').startOf('day').toDate();
-      const localEndOfTomorrow = moment(dayToMatch).add(1, 'day').endOf('day').toDate();
 
-      event.rrule.between(localStartOfYesterday, localEndOfTomorrow).forEach(date => {
+    const excludedDates = event.exdate
+  ? Object.keys(event.exdate).map(key => {
+      const date = tz(event.exdate[key], event.exdate[key].tz || 'UTC');
+      return date.startOf('day');
+    })
+  : [];
 
-        // now the date is in the local timezone, so we need to apply the offset to get it back to UTC
-        const offset = moment(date).utcOffset();
-        date = moment(date).subtract(offset, 'minutes').toDate();
+    // Process recurrence overrides
+    if (event.recurrences) {
+      processRecurrenceOverrides(event, dayToMatch, excludedDates, matchingEvents);
+    }
 
-        // We need to clone the event and override the date
-        const clonedEvent = { ...event };
+    // Process recurring rules
+    if (event.rrule) {
+      processRecurringRules(event, dayToMatch, excludedDates, matchingEvents);
+    }
 
-        console.debug('Found a recurring event to clone: ', event.summary, ' on ', date, 'at ', event.start.toString());
-
-        // But timezones...
-        if (event.rrule != undefined && event.rrule.origOptions.tzid) {
-          const tzid = event.rrule.origOptions.tzid;
-          console.debug("Event rrule.origOptions.tzid:", tzid);
-          // Adjust the cloned event start and end times to the original event timezone
-          clonedEvent.start = adjustDateToOriginalTimezone(event.start, date, tzid);
-          clonedEvent.end = adjustDateToOriginalTimezone(event.end, date, tzid);
-        } else {
-          // If there is no timezone information, assume the event time should not change
-          clonedEvent.start = new Date(date);
-          clonedEvent.end = new Date(date.getTime() + (event.end.getTime() - event.start.getTime()));
-        }
-
-        // Remove rrule property from clonedEvent
-        delete clonedEvent.rrule;
-
-        // pass through a flag to understand this event is a recurrent event
-        clonedEvent.recurrent = true;
-
-        // Check if the event is really during 'today' in the local timezone
-        const eventStartLocal = moment(clonedEvent.start);
-        if (eventStartLocal.isSame(dayToMatch, 'day')) {
-          console.debug("Cloned event:", {
-            ...clonedEvent,
-            start: clonedEvent.start.toString(),
-            end: clonedEvent.end.toString()
-          });
-
-          matchingEvents.push(clonedEvent);
-        }
+    // Check for non-recurring events
+    if (!event.recurrences && !event.rrule && moment(event.start).isSame(dayToMatch, "day")) {
+      console.debug("Adding one-off event:", {
+        summary: event.summary,
+        start: event.start,
+        end: event.end,
+        recurrenceId: event.recurrenceid || null,
+        isRecurring: !!event.rrule || !!event.recurrences,
       });
-    } else if (!hasRecurrenceOverride) {
-      if (moment(event.start).isSame(dayToMatch, "day")) {
-        matchingEvents.push(event);
-      }
+      matchingEvents.push(event);
     }
 
-    if (showOngoing) {
-      if (moment(dayToMatch).isBetween(moment(event.start), moment(event.end), "day")) {
-        matchingEvents.push(event);
-      }
+    // Include ongoing events
+    if (showOngoing && shouldIncludeOngoing(event, dayToMatch)) {
+      matchingEvents.push(event);
     }
 
     return matchingEvents;
-  }, []);;
+  }, []);
 }
 
 export function parseIcs(ics: string) {
