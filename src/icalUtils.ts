@@ -90,6 +90,7 @@ function processRecurringRules(event: any, dayToMatch: string, excludedDates: mo
 
     if (moment(clonedEvent.start).isSame(dayToMatch, 'day')) {
       console.debug(`Adding recurring event: ${clonedEvent.summary} ${clonedEvent.start} - ${clonedEvent.end}`);
+      console.debug(clonedEvent);
       matchingEvents.push(clonedEvent);
     }
   });
