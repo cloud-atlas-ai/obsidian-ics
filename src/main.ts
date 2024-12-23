@@ -79,7 +79,7 @@ export default class ICSPlugin extends Plugin {
       try {
         if (calendarSetting.calendarType === 'vdir') {
           // Assuming you have a method to list files in a directory
-          const icsFiles = app.vault.getFiles().filter(f => f.extension == "ics" && f.path.startsWith(calendarSetting.icsUrl));
+          const icsFiles = this.app.vault.getFiles().filter(f => f.extension == "ics" && f.path.startsWith(calendarSetting.icsUrl));
           for (const icsFile of icsFiles) {
             const fileContent = await this.app.vault.read(icsFile);
             icsArray = icsArray.concat(parseIcs(fileContent));
