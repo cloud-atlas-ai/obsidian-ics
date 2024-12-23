@@ -103,6 +103,7 @@ export default class ICSSettingsTab extends PluginSettingTab {
                 this.plugin.addCalendar({
                   icsName: modal.icsName,
                   icsUrl: modal.icsUrl,
+                  ownerEmail: modal.ownerEmail,
                   format: modal.format,
                   calendarType: modal.calendarType as 'remote' | 'vdir',
                 });
@@ -140,6 +141,7 @@ export default class ICSSettingsTab extends PluginSettingTab {
                   this.plugin.addCalendar({
                     icsName: modal.icsName,
                     icsUrl: modal.icsUrl,
+                    ownerEmail: modal.ownerEmail,
                     format: modal.format,
                     calendarType: modal.calendarType as 'remote' | 'vdir',
                   });
@@ -204,6 +206,7 @@ class SettingsModal extends Modal {
   urlSetting: Setting;
   urlText: TextComponent;
   urlDropdown: DropdownComponent;
+  ownerEmail: string = "";
 
   saved: boolean = false;
   error: boolean = false;
@@ -217,7 +220,7 @@ class SettingsModal extends Modal {
     location: boolean,
     description: boolean,
     showAttendees: boolean,
-    showOngoing: boolean
+    showOngoing: boolean,
   } = DEFAULT_CALENDAR_FORMAT;
   calendarType: string;
   constructor(app: App, plugin: ICSPlugin, setting?: Calendar) {
@@ -226,6 +229,7 @@ class SettingsModal extends Modal {
     if (setting) {
       this.icsName = setting.icsName;
       this.icsUrl = setting.icsUrl;
+      this.ownerEmail = setting.ownerEmail;
       this.format = setting.format;
       this.calendarType = setting.calendarType || 'remote';
     }
@@ -254,6 +258,17 @@ class SettingsModal extends Modal {
         nameText = text;
         nameText.setValue(this.icsName).onChange(async (v) => {
           this.icsName = v;
+          this.hasChanges = true;
+        });
+      });
+
+    const ownerEmailSetting = new Setting(settingDiv)
+      .setName('Calendar Owner Email (Optional)')
+      .setDesc('Used to skip declined events')
+      .addText(text => {
+        text.setValue(this.ownerEmail).onChange(value => {
+          this.ownerEmail = value;
+          this.hasChanges = true;
         });
       });
 

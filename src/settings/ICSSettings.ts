@@ -9,6 +9,13 @@ export interface ICSSettings {
 export interface Calendar {
     icsUrl: string;
     icsName: string;
+
+    /**
+     * Optional field for storing the owner email of this calendar.
+     * Used when checking PARTSTAT=DECLINED for that email.
+     */
+    ownerEmail?: string;
+
     calendarType: 'remote' | 'vdir'; // Add this line
     format: {
         checkbox: boolean;

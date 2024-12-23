@@ -67,6 +67,7 @@ export default class ICSPlugin extends Plugin {
     ].filter(Boolean).join(' ').trim();
   }
 
+
   async getEvents(date: string): Promise<IEvent[]> {
     let events: IEvent[] = [];
     let errorMessages: string[] = []; // To store error messages
@@ -96,16 +97,9 @@ export default class ICSPlugin extends Plugin {
 
       // Exception handling for parsing and filtering
       try {
-        dateEvents = filterMatchingEvents(icsArray, date, calendarSetting.format.showOngoing);
-
-        // Exclude transparent events
-        dateEvents = dateEvents.filter(event => {
-          if (event.transparency && event.transparency.toUpperCase() === "TRANSPARENT") {
-            console.debug(`Excluding transparent event: ${event.summary}`);
-            return false;
-          }
-          return true;
-        });
+        dateEvents = dateEvents = filterMatchingEvents(icsArray, date, calendarSetting.format.showOngoing)
+          .filter(e => this.excludeTransparentEvents(e, calendarSetting))
+          .filter(e => this.excludeDeclinedEvents(e, calendarSetting));
 
       } catch (filterError) {
         console.error(`Error filtering events for calendar ${calendarSetting.icsName}: ${filterError}`);
@@ -184,6 +178,51 @@ export default class ICSPlugin extends Plugin {
 
   onunload() {
     return;
+  }
+
+  excludeTransparentEvents(event: any, calendarSetting: Calendar): boolean {
+    // 1. Exclude transparent events
+    if (
+      event.transparency &&
+      event.transparency.toUpperCase() === "TRANSPARENT"
+    ) {
+      console.debug(`Excluding transparent event: ${event.summary}`);
+      return false;
+    }
+
+    return true;
+
+  }
+
+  excludeDeclinedEvents(event: any, calendarSetting: Calendar): boolean {
+    if (!event.attendees) {
+      event.attendees = Array.isArray(event.attendee)
+        ? event.attendee
+        : event.attendee
+          ? [event.attendee]
+          : [];
+    }
+
+    // 3. Check if the user (calendar owner) declined
+    const ownerEmail = calendarSetting.ownerEmail?.toLowerCase().trim();
+    if (ownerEmail) {
+      const myAttendee = event.attendees.find((att: any) => {
+        const attEmail = att.val.replace("mailto:", "").toLowerCase().trim();
+        return attEmail === ownerEmail;
+      });
+
+      if (myAttendee) {
+        const partStat = myAttendee.params?.PARTSTAT?.toUpperCase();
+        if (partStat === "DECLINED") {
+          // The owner of this calendar has declined the event
+          console.debug(
+            `Skipping event (“${event.summary}”) for ${ownerEmail} due to DECLINED`
+          );
+          return false;
+        }
+      }
+    }
+    return true;
   }
 
   async loadSettings() {
