@@ -13,18 +13,21 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
-    "moment-timezone": "^0.5.45",
+    "moment-timezone": "^0.5.46",
     "node-ical": "^0.20.1",
     "obsidian-daily-notes-interface": "^0.9.4"
   },
   "devDependencies": {
-    "@types/node": "20.8.7",
-    "@typescript-eslint/eslint-plugin": "6.8.0",
-    "@typescript-eslint/parser": "6.8.0",
-    "builtin-modules": "3.3.0",
-    "esbuild": "0.19.5",
-    "obsidian": "1.4.11",
-    "tslib": "2.6.2",
-    "typescript": "5.2.2"
+    "@types/node": "22.10.2",
+    "builtin-modules": "4.0.0",
+    "esbuild": "0.24.2",
+    "eslint": "^8.57.1",
+    "eslint-config-standard": "^17.1.0",
+    "eslint-plugin-import": "^2.31.0",
+    "eslint-plugin-n": "^16.6.2",
+    "eslint-plugin-promise": "^6.6.0",
+    "obsidian": "1.7.2",
+    "tslib": "2.8.1",
+    "typescript": "5.7.2"
   }
 }
