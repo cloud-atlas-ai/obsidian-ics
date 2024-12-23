@@ -26,7 +26,7 @@ export function extractMeetingInfo(e: any): { callUrl: string, callType: string 
   return { callUrl: null, callType: null };
 }
 
-function adjustDateToOriginalTimezone(originalDate: Date, currentDate: Date, tzid: string): Date {
+function applyRecurrenceDateAndTimezone(originalDate: Date, currentDate: Date, tzid: string): Date {
   const momentOriginal = tz(originalDate, tzid);
   const momentCurrent = tz(currentDate, tzid);
 
@@ -69,32 +69,27 @@ function processRecurringRules(event: any, dayToMatch: string, excludedDates: mo
   const localStartOfYesterday = moment(dayToMatch).subtract(1, 'day').startOf('day').toDate();
   const localEndOfTomorrow = moment(dayToMatch).add(1, 'day').endOf('day').toDate();
 
-  event.rrule.between(localStartOfYesterday, localEndOfTomorrow).forEach(recurrenceDate => {
-    const recurrenceMoment = moment(recurrenceDate).startOf('day');
+  // Get recurrence dates within the range
+  const recurrenceDates = event.rrule.between(localStartOfYesterday, localEndOfTomorrow, true);
+
+  recurrenceDates.forEach(recurrenceDate => {
+    const recurrenceMoment = tz(recurrenceDate, event.rrule.origOptions.tzid || 'UTC');
+
+    // Clone the event and use the recurrence date directly if start and end times are present
+    const clonedEvent = { ...event };
+    clonedEvent.start = applyRecurrenceDateAndTimezone(event.start, recurrenceDate, event.rrule.origOptions.tzid);
+    clonedEvent.end = applyRecurrenceDateAndTimezone(event.end, recurrenceDate, event.rrule.origOptions.tzid);
 
     if (isExcluded(recurrenceMoment, excludedDates)) {
       console.debug(`Skipping excluded recurrence: ${event.summary} on ${recurrenceMoment.format('YYYY-MM-DD')}`);
       return;
     }
 
-    const adjustedRecurrenceDate = tz(recurrenceMoment.toDate(), event.rrule.origOptions.tzid || 'UTC').toDate();
-    const clonedEvent = { ...event };
-
-    if (event.rrule.origOptions.tzid) {
-      const tzid = event.rrule.origOptions.tzid;
-      clonedEvent.start = adjustDateToOriginalTimezone(event.start, adjustedRecurrenceDate, tzid);
-      clonedEvent.end = adjustDateToOriginalTimezone(event.end, adjustedRecurrenceDate, tzid);
-    } else {
-      clonedEvent.start = new Date(adjustedRecurrenceDate);
-      clonedEvent.end = new Date(adjustedRecurrenceDate.getTime() + (event.end.getTime() - event.start.getTime()));
-    }
-
     delete clonedEvent.rrule;
     clonedEvent.recurrent = true;
 
     if (moment(clonedEvent.start).isSame(dayToMatch, 'day')) {
-      console.debug(`Adding recurring event: ${clonedEvent.summary} on ${recurrenceMoment.format('YYYY-MM-DD')} ${clonedEvent}`);
-      console.debug(clonedEvent);
+      console.debug(`Adding recurring event: ${clonedEvent.summary} ${clonedEvent.start} - ${clonedEvent.end}`);
       matchingEvents.push(clonedEvent);
     }
   });
