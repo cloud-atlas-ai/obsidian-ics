@@ -101,11 +101,40 @@ export default class ICSPlugin extends Plugin {
         // Exclude transparent events
         dateEvents = dateEvents.filter(event => {
           if (event.transparency && event.transparency.toUpperCase() === "TRANSPARENT") {
-            console.debug(`Excluding transparent event: ${event.summary}`);
+            console.debug(`Skipping transparent event: ${event.summary}`);
             return false;
           }
+
+          if (calendarSetting.ownerEmail === undefined) return true;
+
+          // Ensure event.attendees is always an array
+          if (!event.attendees) {
+            event.attendees = Array.isArray(event.attendee)
+              ? event.attendee
+              : event.attendee
+                ? [event.attendee]
+                : [];
+          }
+
+          // Find the attendee matching the calendar’s ownerEmail
+          const myAttendee = event.attendees.find((att: any) => {
+            const attEmail = att.val.replace("mailto:", "").toLowerCase();
+            return attEmail === calendarSetting.ownerEmail?.toLowerCase();
+          });
+
+          // If found, check PARTSTAT
+          if (myAttendee) {
+            const partStat = myAttendee.params?.PARTSTAT?.toUpperCase();
+            if (partStat === "DECLINED") {
+              // It's the owner’s event, and they declined it—skip it
+              console.debug(`Skipping declined event: ${event.summary}`);
+              return false;
+            }
+          }
+
           return true;
         });
+
 
       } catch (filterError) {
         console.error(`Error filtering events for calendar ${calendarSetting.icsName}: ${filterError}`);
