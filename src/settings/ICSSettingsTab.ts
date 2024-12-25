@@ -221,6 +221,7 @@ class SettingsModal extends Modal {
     description: boolean,
     showAttendees: boolean,
     showOngoing: boolean,
+    showTransparentEvents: boolean,
   } = DEFAULT_CALENDAR_FORMAT;
   calendarType: string;
   constructor(app: App, plugin: ICSPlugin, setting?: Calendar) {
@@ -409,6 +410,16 @@ class SettingsModal extends Modal {
         .setValue(this.format.showOngoing)
         .onChange(value => {
           this.format.showOngoing = value;
+          this.hasChanges = true;
+        }));
+
+    const showTransparentEventsToggle = new Setting(settingDiv)
+      .setName('Show Transparent Events')
+      .setDesc('Display events marked as transparent (free/available) in the calendar')
+      .addToggle(toggle => toggle
+        .setValue(this.format.showTransparentEvents)
+        .onChange(value => {
+          this.format.showTransparentEvents = value;
           this.hasChanges = true;
         }));
 

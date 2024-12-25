@@ -16,7 +16,7 @@ export interface Calendar {
      */
     ownerEmail?: string;
 
-    calendarType: 'remote' | 'vdir'; // Add this line
+    calendarType: 'remote' | 'vdir';
     format: {
         checkbox: boolean;
         includeEventEndTime: boolean;
@@ -26,6 +26,7 @@ export interface Calendar {
         description: boolean;
         showAttendees: boolean;
         showOngoing: boolean;
+        showTransparentEvents: boolean;
     }
 }
 
@@ -36,9 +37,10 @@ export const DEFAULT_CALENDAR_FORMAT = {
     summary: true,
     location: true,
     description: false,
-    calendarType: 'remote', // Set the default type to 'remote'
+    calendarType: 'remote',
     showAttendees: false,
-    showOngoing: false
+    showOngoing: false,
+    showTransparentEvents: false
 };
 
 export const DEFAULT_SETTINGS: ICSSettings = {

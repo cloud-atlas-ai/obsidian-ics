@@ -181,7 +181,12 @@ export default class ICSPlugin extends Plugin {
   }
 
   excludeTransparentEvents(event: any, calendarSetting: Calendar): boolean {
-    // 1. Exclude transparent events
+    // Check if transparent events should be shown for this calendar
+    if (calendarSetting.format.showTransparentEvents) {
+      return true;
+    }
+
+    // Exclude transparent events if not enabled for this calendar
     if (
       event.transparency &&
       event.transparency.toUpperCase() === "TRANSPARENT"
@@ -191,7 +196,6 @@ export default class ICSPlugin extends Plugin {
     }
 
     return true;
-
   }
 
   excludeDeclinedEvents(event: any, calendarSetting: Calendar): boolean {
