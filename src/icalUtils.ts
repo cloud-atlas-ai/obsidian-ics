@@ -60,6 +60,8 @@ function processRecurrenceOverrides(event: any, dayToMatch: string, excludedDate
     if (moment(recurrence.start).isSame(dayToMatch, "day")) {
       console.debug(`Adding recurring event with override: ${recurrence.summary} on ${recurrenceMoment.format('YYYY-MM-DD')} ${recurrence}`);
       console.debug(recurrence);
+      recurrence.recurrence = true;
+      recurrence.eventType = "recurring override";
       matchingEvents.push(recurrence);
     }
   }
@@ -91,6 +93,7 @@ function processRecurringRules(event: any, dayToMatch: string, excludedDates: mo
     if (moment(clonedEvent.start).isSame(dayToMatch, 'day')) {
       console.debug(`Adding recurring event: ${clonedEvent.summary} ${clonedEvent.start} - ${clonedEvent.end}`);
       console.debug(clonedEvent);
+      clonedEvent.eventType = "recurring";
       matchingEvents.push(clonedEvent);
     }
   });
@@ -134,6 +137,7 @@ export function filterMatchingEvents(icsArray: any[], dayToMatch: string, showOn
         recurrenceId: event.recurrenceid || null,
         isRecurring: !!event.rrule || !!event.recurrences,
       });
+      event.eventType = "one-off";
       matchingEvents.push(event);
     }
 

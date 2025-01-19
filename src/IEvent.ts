@@ -17,6 +17,7 @@ export interface IEvent {
 	callType: string; // Type of online meeting (e.g., Zoom, Skype, etc.)
 	organizer: IOrganizer; // Email of the organizer of the event
   attendees: IAttendee[]; // Array of attendees
+  eventType: string; // Type of event (e.g., one-off, recurring, recurring override)
 }
 
 export interface IAttendee {

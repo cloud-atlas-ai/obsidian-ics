@@ -101,6 +101,18 @@ export default class ICSPlugin extends Plugin {
           .filter(e => this.excludeTransparentEvents(e, calendarSetting))
           .filter(e => this.excludeDeclinedEvents(e, calendarSetting));
 
+          // Deduplicate events based on calendar, title, start, and end time
+          const uniqueEventSet = new Set();
+          dateEvents = dateEvents.filter(e => {
+            const uniqueKey = `${e.calendar}-${e.summary}-${e.start}-${e.end}`;
+            if (uniqueEventSet.has(uniqueKey)) {
+              return false;
+            } else {
+              uniqueEventSet.add(uniqueKey);
+              return true;
+            }
+          });
+
       } catch (filterError) {
         console.error(`Error filtering events for calendar ${calendarSetting.icsName}: ${filterError}`);
         errorMessages.push(`Error filtering events in calendar "${calendarSetting.icsName}"`);
@@ -125,6 +137,7 @@ export default class ICSPlugin extends Plugin {
             location: e.location ? e.location : null,
             callUrl: callUrl,
             callType: callType,
+            eventType: e.eventType,
             organizer: { email: e.organizer?.val.substring(7) || null, name: e.organizer?.params?.CN || null },
             attendees: e.attendee ? (Array.isArray(e.attendee) ? e.attendee : [e.attendee]).map(attendee => ({
               name: attendee.params.CN,
