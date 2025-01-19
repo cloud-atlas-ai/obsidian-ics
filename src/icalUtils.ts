@@ -47,20 +47,15 @@ function processRecurrenceOverrides(event: any, dayToMatch: string, excludedDate
     const recurrence = event.recurrences[date];
     const recurrenceMoment = moment(date).startOf('day');
 
-    if (isExcluded(recurrenceMoment, excludedDates)) {
-      console.debug(`Skipping excluded recurrence override: ${recurrence.summary} on ${recurrenceMoment.format('YYYY-MM-DD')}`);
-      continue;
-    }
-
+    // Skip canceled overrides
     if (recurrence.status && recurrence.status.toUpperCase() === "CANCELLED") {
-      console.debug(`Skipping canceled recurrence: ${recurrence.summary} on ${date}`);
+      console.debug(`Skipping canceled recurrence override: ${recurrence.summary} on ${date}`);
       continue;
     }
 
+    // Check if this override matches the dayToMatch
     if (moment(recurrence.start).isSame(dayToMatch, "day")) {
-      console.debug(`Adding recurring event with override: ${recurrence.summary} on ${recurrenceMoment.format('YYYY-MM-DD')} ${recurrence}`);
-      console.debug(recurrence);
-      recurrence.recurrence = true;
+      console.debug(`Adding recurring event with override: ${recurrence.summary} on ${recurrenceMoment.format('YYYY-MM-DD')}`);
       recurrence.eventType = "recurring override";
       matchingEvents.push(recurrence);
     }
@@ -92,6 +87,8 @@ function processRecurringRules(event: any, dayToMatch: string, excludedDates: mo
 
     if (moment(clonedEvent.start).isSame(dayToMatch, 'day')) {
       console.debug(`Adding recurring event: ${clonedEvent.summary} ${clonedEvent.start} - ${clonedEvent.end}`);
+      console.debug("Excluded dates:", excludedDates.map(date => date.format('YYYY-MM-DD')));
+
       console.debug(clonedEvent);
       clonedEvent.eventType = "recurring";
       matchingEvents.push(clonedEvent);
@@ -111,24 +108,32 @@ export function filterMatchingEvents(icsArray: any[], dayToMatch: string, showOn
       return matchingEvents;
     }
 
-    const excludedDates = event.exdate
-  ? Object.keys(event.exdate).map(key => {
-      const date = tz(event.exdate[key], event.exdate[key].tz || 'UTC');
-      return date.startOf('day');
-    })
-  : [];
+    // Populate excluded dates from exdates and recurrence overrides
+    const excludedDates = [
+      ...(event.exdate
+        ? Object.keys(event.exdate).map(key => {
+          const date = tz(event.exdate[key], event.exdate[key].tz || 'UTC');
+          return date.startOf('day');
+        })
+        : []),
 
-    // Process recurrence overrides
+      // Add overridden dates from recurrences
+      ...(event.recurrences
+        ? Object.keys(event.recurrences).map(key => moment(key).startOf('day'))
+        : [])
+    ];
+
+    // Process recurrence overrides to populate matching events and excluded dates
     if (event.recurrences) {
       processRecurrenceOverrides(event, dayToMatch, excludedDates, matchingEvents);
     }
 
-    // Process recurring rules
+    // Process recurring rules, skipping overridden dates
     if (event.rrule) {
       processRecurringRules(event, dayToMatch, excludedDates, matchingEvents);
     }
 
-    // Check for non-recurring events
+    // Process non-recurring events
     if (!event.recurrences && !event.rrule && moment(event.start).isSame(dayToMatch, "day")) {
       console.debug("Adding one-off event:", {
         summary: event.summary,
