@@ -35,6 +35,9 @@ then
   jq ".version |= \"${NEW_VERSION}\"" package.json > "$TEMP_FILE" || exit 1
   mv "$TEMP_FILE" package.json
 
+  echo "Updating package-lock.json"
+  npm install
+
   echo "Updating manifest.json"
   TEMP_FILE=$(mktemp)
   jq ".version |= \"${NEW_VERSION}\" | .minAppVersion |= \"${MINIMUM_OBSIDIAN_VERSION}\"" manifest.json > "$TEMP_FILE" || exit 1
