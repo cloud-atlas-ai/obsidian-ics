@@ -3,63 +3,54 @@
 set -euo pipefail
 
 if [ "$#" -ne 2 ]; then
-    echo "Must provide exactly two arguments."
-    echo "First one must be the new version number."
-    echo "Second one must be the minimum obsidian version for this release."
-    echo ""
-    echo "Example usage:"
-    echo "./release.sh 0.3.0 0.11.13"
-    echo "Exiting."
-
+    echo "Usage: $0 <new-version> <minimum-obsidian-version>"
     exit 1
-fi
-
-if [[ $(git status --porcelain) ]]; then
-  echo "Changes in the git repo."
-  echo "Exiting."
-
-  exit 1
 fi
 
 NEW_VERSION=$1
 MINIMUM_OBSIDIAN_VERSION=$2
+BRANCH_NAME="release/${NEW_VERSION}"
 
-echo "Updating to version ${NEW_VERSION} with minimum obsidian version ${MINIMUM_OBSIDIAN_VERSION}"
-
-read -p "Continue? [y/N] " -n 1 -r
-echo
-if [[ $REPLY =~ ^[Yy]$ ]]
-then
-  echo "Updating package.json"
-  TEMP_FILE=$(mktemp)
-  jq ".version |= \"${NEW_VERSION}\"" package.json > "$TEMP_FILE" || exit 1
-  mv "$TEMP_FILE" package.json
-
-  echo "Updating package-lock.json"
-  npm install
-
-  echo "Updating manifest.json"
-  TEMP_FILE=$(mktemp)
-  jq ".version |= \"${NEW_VERSION}\" | .minAppVersion |= \"${MINIMUM_OBSIDIAN_VERSION}\"" manifest.json > "$TEMP_FILE" || exit 1
-  mv "$TEMP_FILE" manifest.json
-
-  echo "Updating versions.json"
-  TEMP_FILE=$(mktemp)
-  jq ". += {\"${NEW_VERSION}\": \"${MINIMUM_OBSIDIAN_VERSION}\"}" versions.json > "$TEMP_FILE" || exit 1
-  mv "$TEMP_FILE" versions.json
-
-  read -p "Create git commit, tag, and push? [y/N] " -n 1 -r
-  echo
-  if [[ $REPLY =~ ^[Yy]$ ]]
-  then
-
-    git add -A .
-    git commit -m"Update to version ${NEW_VERSION}"
-    git tag "${NEW_VERSION}"
-    git push
-    git push --tags
-  fi
-else
-  echo "Exiting."
+# Ensure no uncommitted changes
+if [[ $(git status --porcelain) ]]; then
+  echo "Uncommitted changes detected. Please commit or stash them before running the release script."
   exit 1
 fi
+
+echo "Preparing release ${NEW_VERSION} with minimum Obsidian version ${MINIMUM_OBSIDIAN_VERSION}"
+
+# Create and switch to a new branch
+git checkout -b "${BRANCH_NAME}"
+
+# Update version in package.json
+echo "Updating package.json..."
+jq ".version = \"${NEW_VERSION}\"" package.json > package.json.tmp && mv package.json.tmp package.json
+
+# Update version in manifest.json
+echo "Updating manifest.json..."
+jq ".version = \"${NEW_VERSION}\" | .minAppVersion = \"${MINIMUM_OBSIDIAN_VERSION}\"" manifest.json > manifest.json.tmp && mv manifest.json.tmp manifest.json
+
+# Update versions.json
+echo "Updating versions.json..."
+jq ". += {\"${NEW_VERSION}\": \"${MINIMUM_OBSIDIAN_VERSION}\"}" versions.json > versions.json.tmp && mv versions.json.tmp versions.json
+
+# Install dependencies to update package-lock.json
+echo "Updating package-lock.json..."
+npm install
+
+# Commit changes
+git add package.json package-lock.json manifest.json versions.json
+git commit -m "Release ${NEW_VERSION}"
+
+# Push branch to remote
+git push --set-upstream origin "${BRANCH_NAME}"
+
+# Create a pull request
+echo "Creating a pull request..."
+gh pr create \
+  --title "Release ${NEW_VERSION}" \
+  --body "This pull request updates the version to ${NEW_VERSION} and sets the minimum Obsidian version to ${MINIMUM_OBSIDIAN_VERSION}." \
+  --base master \
+  --head "${BRANCH_NAME}"
+
+echo "Pull request created. Please review and merge it to trigger the release workflow."
