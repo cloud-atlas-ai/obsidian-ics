@@ -1,43 +1,55 @@
 name: Build obsidian plugin
 
 on:
-  push:
-    # Sequence of patterns matched against refs/tags
-    tags:
-    - '*' # Push events to matching any tag format, i.e. 1.0, 20.15.10
-
+  pull_request:
+    branches:
+      - master
+    types:
+      - closed # Trigger only when a PR is closed (merged)
 env:
   PLUGIN_NAME: obsidian-ics
 
 jobs:
   build:
+    if: github.event.pull_request.merged == true && startsWith(github.head_ref, 'release/')
     permissions:
       contents: write
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
-    - name: Use Node.js
-      uses: actions/setup-node@v3
-      with:
-        node-version: '20.x' # You might need to adjust this value to your own version
-    - name: Build
-      id: build
-      run: |
-        npm install
-        npm run build --if-present
-        npm run dev-build --if-present
-        mkdir ${{ env.PLUGIN_NAME }}
-        cp manifest.json dist/
-        cp styles.css dist/
-        cp dist/main.js dist/manifest.json ${{ env.PLUGIN_NAME }}
-        zip -r ${{ env.PLUGIN_NAME }}.zip ${{ env.PLUGIN_NAME }}
-        ls dist/
-    - name: Create release
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      run: |
-        tag="${GITHUB_REF#refs/tags/}"
-        gh release create "$tag" \
-            --title="$tag" \
+      - uses: actions/checkout@v3
+      - name: Use Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '22.10.2'
+      - name: Install dependencies
+        run: npm install
+      - name: Create and push a tag
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          VERSION=$(jq -r .version package.json)
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag "$VERSION"
+          git push origin "$VERSION"
+
+      - name: Build
+        run: |
+          npm run build --if-present
+          mkdir ${{ env.PLUGIN_NAME }}
+          cp manifest.json dist/
+          cp styles.css dist/
+          cp dist/main.js dist/manifest.json ${{ env.PLUGIN_NAME }}
+          zip -r ${{ env.PLUGIN_NAME }}.zip ${{ env.PLUGIN_NAME }}
+          ls dist/
+
+      - name: Create release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          VERSION=$(jq -r .version package.json)
+          gh release create "$VERSION" \
             --draft \
-            dist/main.js dist/styles.css dist/manifest.json dist/main-debug.js ${{ env.PLUGIN_NAME }}.zip
+            --title="$VERSION" \
+            --notes "Automated release for version $VERSION" \
+            dist/main.js dist/styles.css dist/manifest.json ${{ env.PLUGIN_NAME }}.zip
