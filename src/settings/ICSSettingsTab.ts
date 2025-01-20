@@ -413,9 +413,9 @@ class SettingsModal extends Modal {
           this.hasChanges = true;
         }));
 
-    const showTransparentEventsToggle = new Setting(settingDiv)
-      .setName('Show Transparent Events')
-      .setDesc('Display events marked as transparent (free/available) in the calendar')
+    const includeAvailableEventsToggle = new Setting(settingDiv)
+      .setName("Include 'Available' Events")
+      .setDesc("Display events marked as 'Available' (do not block time) in the calendar. These are also referred to as 'Transparent' events.")
       .addToggle(toggle => toggle
         .setValue(this.format.showTransparentEvents)
         .onChange(value => {
