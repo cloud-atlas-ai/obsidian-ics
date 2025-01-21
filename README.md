@@ -88,6 +88,7 @@ If you want to support my work, you can [buy me a coffee](https://www.buymeacoff
 - [Implement customizable output format for events](https://github.com/muness/obsidian-ics/pull/55) @GoBeromsu
 - [Documenting Dataview usage](https://github.com/muness/obsidian-ics/issues/56#issuecomment-1746417368) @afonsoguerra
 - [Vdir enhancements](https://github.com/cloud-atlas-ai/obsidian-ics/pull/131) @bpannier
+- [Ensure recurrent flag is set correctly](https://github.com/cloud-atlas-ai/obsidian-ics/pull/158) for recurrence overrides @mikeh
 
 ## Manual Installation
 
