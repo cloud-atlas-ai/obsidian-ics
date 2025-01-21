@@ -53,6 +53,8 @@ function processRecurrenceOverrides(event: any, dayToMatch: string, excludedDate
       continue;
     }
 
+    recurrence.recurrent = true;
+
     // Check if this override matches the dayToMatch
     if (moment(recurrence.start).isSame(dayToMatch, "day")) {
       console.debug(`Adding recurring event with override: ${recurrence.summary} on ${recurrenceMoment.format('YYYY-MM-DD')}`);
