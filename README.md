@@ -77,11 +77,13 @@ You can see the available fields an the [Event interface](https://github.com/clo
 
 ### Full Calendar
 
+Or you can use [Full Calendar](https://github.com/obsidian-community/obsidian-full-calendar) to render a calendar view of your events. Here's an example of how you can use it:
+
 ```javascript
 const { renderCalendar } = app.plugins.getPlugin("obsidian-full-calendar");
 const thisWeek = Array.from({length: 7}).map((_, weekday) => moment().set({weekday}).format("YYYY-MM-DD"))
 const icsPlugin = app.plugins.getPlugin('ics')
-const events = (await icsPlugin.getEvents(...thisWeek))	
+const events = (await icsPlugin.getEvents(...thisWeek))
     .map(event => {
 	  const start = moment.unix(event.utime)
 	  const [endHours, endMinutes] = event.endTime.split(":")
@@ -109,6 +111,7 @@ If you want to support my work, you can [buy me a coffee](https://www.buymeacoff
 - [Documenting Dataview usage](https://github.com/muness/obsidian-ics/issues/56#issuecomment-1746417368) @afonsoguerra
 - [Vdir enhancements](https://github.com/cloud-atlas-ai/obsidian-ics/pull/131) @bpannier
 - [Ensure recurrent flag is set correctly](https://github.com/cloud-atlas-ai/obsidian-ics/pull/158) for recurrence overrides @mikeh
+- [Support multiple days](https://github.com/cloud-atlas-ai/obsidian-ics/pull/160) and document [Full Calendar](https://github.com/obsidian-community/obsidian-full-calendar) usage @ctrl-q
 
 ## Manual Installation
 
