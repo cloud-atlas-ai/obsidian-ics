@@ -68,7 +68,7 @@ export default class ICSPlugin extends Plugin {
   }
 
 
-  async getEvents(date: string): Promise<IEvent[]> {
+  async getEvents(...dates: string[]): Promise<IEvent[]> {
     let events: IEvent[] = [];
     let errorMessages: string[] = []; // To store error messages
 
@@ -97,7 +97,7 @@ export default class ICSPlugin extends Plugin {
 
       // Exception handling for parsing and filtering
       try {
-        dateEvents = dateEvents = filterMatchingEvents(icsArray, date, calendarSetting.format.showOngoing)
+        dateEvents = dateEvents = filterMatchingEvents(icsArray, dates, calendarSetting.format.showOngoing)
           .filter(e => this.excludeTransparentEvents(e, calendarSetting))
           .filter(e => this.excludeDeclinedEvents(e, calendarSetting));
 

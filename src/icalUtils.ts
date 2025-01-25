@@ -42,7 +42,7 @@ function isExcluded(recurrenceDate: moment.Moment, exdateArray: moment.Moment[])
   return exdateArray.some(exDate => exDate.isSame(recurrenceDate, 'day'));
 }
 
-function processRecurrenceOverrides(event: any, dayToMatch: string, excludedDates: moment.Moment[], matchingEvents: any[]) {
+function processRecurrenceOverrides(event: any, sortedDaysToMatch: string[], excludedDates: moment.Moment[], matchingEvents: any[]) {
   for (const date in event.recurrences) {
     const recurrence = event.recurrences[date];
     const recurrenceMoment = moment(date).startOf('day');
@@ -56,7 +56,7 @@ function processRecurrenceOverrides(event: any, dayToMatch: string, excludedDate
     recurrence.recurrent = true;
 
     // Check if this override matches the dayToMatch
-    if (moment(recurrence.start).isSame(dayToMatch, "day")) {
+    if (moment(recurrence.start).isBetween(sortedDaysToMatch.first(), sortedDaysToMatch.last(), "day")) {
       console.debug(`Adding recurring event with override: ${recurrence.summary} on ${recurrenceMoment.format('YYYY-MM-DD')}`);
       recurrence.eventType = "recurring override";
       matchingEvents.push(recurrence);
@@ -64,12 +64,12 @@ function processRecurrenceOverrides(event: any, dayToMatch: string, excludedDate
   }
 }
 
-function processRecurringRules(event: any, dayToMatch: string, excludedDates: moment.Moment[], matchingEvents: any[]) {
-  const localStartOfYesterday = moment(dayToMatch).subtract(1, 'day').startOf('day').toDate();
-  const localEndOfTomorrow = moment(dayToMatch).add(1, 'day').endOf('day').toDate();
+function processRecurringRules(event: any, sortedDaysToMatch: string[], excludedDates: moment.Moment[], matchingEvents: any[]) {
+  const localStartOfRange = moment(sortedDaysToMatch.first()).subtract(1, 'day').startOf('day').toDate();
+  const localEndOfRange = moment(sortedDaysToMatch.last()).add(1, 'day').endOf('day').toDate();
 
   // Get recurrence dates within the range
-  const recurrenceDates = event.rrule.between(localStartOfYesterday, localEndOfTomorrow, true);
+  const recurrenceDates = event.rrule.between(localStartOfRange, localEndOfRange, true);
 
   recurrenceDates.forEach(recurrenceDate => {
     const recurrenceMoment = tz(recurrenceDate, event.rrule.origOptions.tzid || 'UTC');
@@ -87,7 +87,7 @@ function processRecurringRules(event: any, dayToMatch: string, excludedDates: mo
     delete clonedEvent.rrule;
     clonedEvent.recurrent = true;
 
-    if (moment(clonedEvent.start).isSame(dayToMatch, 'day')) {
+    if (moment(clonedEvent.start).isBetween(sortedDaysToMatch.first(), sortedDaysToMatch.last(), 'day')) {
       console.debug(`Adding recurring event: ${clonedEvent.summary} ${clonedEvent.start} - ${clonedEvent.end}`);
       console.debug("Excluded dates:", excludedDates.map(date => date.format('YYYY-MM-DD')));
 
@@ -102,7 +102,8 @@ function shouldIncludeOngoing(event: any, dayToMatch: string): boolean {
   return moment(dayToMatch).isBetween(moment(event.start), moment(event.end), "day");
 }
 
-export function filterMatchingEvents(icsArray: any[], dayToMatch: string, showOngoing: boolean) {
+export function filterMatchingEvents(icsArray: any[], daysToMatch: string[], showOngoing: boolean) {
+  const sortedDaysToMatch = [...daysToMatch].sort();
   return icsArray.reduce((matchingEvents, event) => {
     // Skip canceled parent events
     if (event.status && event.status.toUpperCase() === "CANCELLED") {
@@ -127,16 +128,16 @@ export function filterMatchingEvents(icsArray: any[], dayToMatch: string, showOn
 
     // Process recurrence overrides to populate matching events and excluded dates
     if (event.recurrences) {
-      processRecurrenceOverrides(event, dayToMatch, excludedDates, matchingEvents);
+      processRecurrenceOverrides(event, sortedDaysToMatch, excludedDates, matchingEvents);
     }
 
     // Process recurring rules, skipping overridden dates
     if (event.rrule) {
-      processRecurringRules(event, dayToMatch, excludedDates, matchingEvents);
+      processRecurringRules(event, sortedDaysToMatch, excludedDates, matchingEvents)
     }
 
     // Process non-recurring events
-    if (!event.recurrences && !event.rrule && moment(event.start).isSame(dayToMatch, "day")) {
+    if (!event.recurrences && !event.rrule && moment(event.start).isBetween(sortedDaysToMatch.first(), sortedDaysToMatch.last(), "day")) {
       console.debug("Adding one-off event:", {
         summary: event.summary,
         start: event.start,
@@ -149,7 +150,7 @@ export function filterMatchingEvents(icsArray: any[], dayToMatch: string, showOn
     }
 
     // Include ongoing events
-    if (showOngoing && shouldIncludeOngoing(event, dayToMatch)) {
+    if (showOngoing && daysToMatch.some(dayToMatch => shouldIncludeOngoing(event, dayToMatch))) {
       matchingEvents.push(event);
     }
 
