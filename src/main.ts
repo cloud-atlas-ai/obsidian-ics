@@ -138,13 +138,13 @@ export default class ICSPlugin extends Plugin {
             callUrl: callUrl,
             callType: callType,
             eventType: e.eventType,
-            organizer: { email: e.organizer?.val.substring(7) || null, name: e.organizer?.params?.CN || null },
+            organizer: { email: e.organizer?.val?.substring(7) || null, name: e.organizer?.params?.CN || null },
             attendees: e.attendee ? (Array.isArray(e.attendee) ? e.attendee : [e.attendee]).map(attendee => ({
-              name: attendee.params.CN,
-              email: attendee.val.substring(7),
-              status: attendee.params.PARTSTAT,
-              role: attendee.params.ROLE,
-              type: attendee.params.CUTYPE || "INDIVIDUAL"
+              name: attendee.params?.CN,
+              email: attendee.val?.substring(7),
+              status: attendee.params?.PARTSTAT,
+              role: attendee.params?.ROLE,
+              type: attendee.params?.CUTYPE || "INDIVIDUAL"
             })) : []
           };
           events.push(event);
@@ -224,7 +224,7 @@ export default class ICSPlugin extends Plugin {
     const ownerEmail = calendarSetting.ownerEmail?.toLowerCase().trim();
     if (ownerEmail) {
       const myAttendee = event.attendees.find((att: any) => {
-        const attEmail = att.val.replace("mailto:", "").toLowerCase().trim();
+        const attEmail = att.val?.replace("mailto:", "").toLowerCase().trim();
         return attEmail === ownerEmail;
       });
 
