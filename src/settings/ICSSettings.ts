@@ -16,7 +16,7 @@ export interface Calendar {
      */
     ownerEmail?: string;
 
-    calendarType: 'remote' | 'vdir';
+    calendarType: 'remote' | 'vdir' | 'local';
     format: {
         checkbox: boolean;
         includeEventEndTime: boolean;
