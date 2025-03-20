@@ -84,10 +84,6 @@ export default class ICSPlugin extends Plugin {
             const fileContent = await this.app.vault.read(icsFile);
             icsArray = icsArray.concat(parseIcs(fileContent));
           }
-        } else if (calendarSetting.calendarType === 'local') {
-          // Assuming you have a method to read a file
-          const fileContent = await this.app.vault.read(calendarSetting.icsUrl);
-          icsArray = parseIcs(fileContent);
         } else {
           // Existing logic for remote URLs
           icsArray = parseIcs(await request({ url: calendarSetting.icsUrl }));

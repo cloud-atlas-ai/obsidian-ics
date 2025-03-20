@@ -243,11 +243,6 @@ class SettingsModal extends Modal {
     return Array.from(directories);
   }
 
-  listIcsFiles(): string[] {
-    const icsFiles = this.app.vault.getFiles().filter(f => f.extension === "ics");
-    return icsFiles.map(f => f.path.toString());
-  }
-
   display() {
     let {
       contentEl
@@ -278,38 +273,33 @@ class SettingsModal extends Modal {
         });
       });
 
-      const calendarTypeSetting = new Setting(settingDiv)
+    const calendarTypeSetting = new Setting(settingDiv)
       .setName('Calendar Type')
-      .setDesc('Select the type of calendar (Remote URL, vdir, or Local ICS File)')
+      .setDesc('Select the type of calendar (Remote URL or vdir)')
       .addDropdown(dropdown => {
         dropdown.addOption('remote', 'Remote URL');
         dropdown.addOption('vdir', 'vdir');
-        dropdown.addOption('local', 'Local ICS File');
         dropdown.setValue(this.calendarType)
           .onChange(value => {
-            this.calendarType = value as 'remote' | 'vdir' | 'local';
-            updateCalendarSourceSetting();
+            this.calendarType = value as 'remote' | 'vdir';
+            updateUrlSetting();
           });
       });
 
-    const calendarSourceSSettingDiv = settingDiv.createDiv({ cls: 'calendar-source-setting-container' });
+    const urlSettingDiv = settingDiv.createDiv({ cls: 'url-setting-container' });
 
     // Function to update URL setting
-    const updateCalendarSourceSetting = () => {
+    const updateUrlSetting = () => {
       // First, remove the existing URL setting if it exists
       settingDiv.querySelectorAll('.url-setting').forEach(el => el.remove());
 
-      let calendarSourceSetting = new Setting(calendarSourceSSettingDiv)
-        .setName(
-          this.calendarType === 'vdir' ? 'Directory' :
-          this.calendarType === 'local' ? 'ICS File' :
-          'Calendar URL'
-        );
-      calendarSourceSetting.settingEl.addClass('url-setting');
+      let urlSetting = new Setting(urlSettingDiv)
+        .setName(this.calendarType === 'vdir' ? 'Directory' : 'Calendar URL');
+      urlSetting.settingEl.addClass('url-setting');
 
       if (this.calendarType === 'vdir') {
-        // If vdir, add a dropdown listing directories
-        calendarSourceSetting.addDropdown(dropdown => {
+        // If vdir, add a dropdown
+        urlSetting.addDropdown(dropdown => {
           const directories = this.listIcsDirectories();
           directories.forEach(dir => {
             dropdown.addOption(dir, dir);
@@ -319,31 +309,19 @@ class SettingsModal extends Modal {
             this.hasChanges = true;
           });
         });
-      } else if (this.calendarType === 'local') {
-        // If local, add a dropdown listing ICS files from the vault
-        calendarSourceSetting.addDropdown(dropdown => {
-          const files = this.listIcsFiles();
-          files.forEach(file => {
-            dropdown.addOption(file, file);
-          });
-          dropdown.setValue(this.icsUrl).onChange(value => {
-            this.icsUrl = value;
-            this.hasChanges = true;
-          });
-        });
       } else {
         // If remote, add a text input
-        calendarSourceSetting.addText(text => {
+        urlSetting.addText(text => {
           text.setValue(this.icsUrl).onChange(value => {
             this.icsUrl = value;
-            this.hasChanges = true;
+            this.hasChanges = true
           });
         });
       }
     };
 
     // Call updateUrlSetting initially
-    updateCalendarSourceSetting();
+    updateUrlSetting();
 
     new Setting(settingDiv)
       .setHeading().setName("Output Format");
