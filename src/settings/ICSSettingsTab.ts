@@ -275,10 +275,10 @@ class SettingsModal extends Modal {
 
     const calendarTypeSetting = new Setting(settingDiv)
       .setName('Calendar Type')
-      .setDesc('Select the type of calendar (Remote URL or vdir)')
+      .setDesc('Select the type of calendar (Remote URL or Vault Folder with ICS files, maintained manually or via automation like vdirsyncer)')
       .addDropdown(dropdown => {
         dropdown.addOption('remote', 'Remote URL');
-        dropdown.addOption('vdir', 'vdir');
+        dropdown.addOption('vdir', 'Folder with ICS files');
         dropdown.setValue(this.calendarType)
           .onChange(value => {
             this.calendarType = value as 'remote' | 'vdir';
@@ -294,7 +294,8 @@ class SettingsModal extends Modal {
       settingDiv.querySelectorAll('.url-setting').forEach(el => el.remove());
 
       let urlSetting = new Setting(urlSettingDiv)
-        .setName(this.calendarType === 'vdir' ? 'Directory' : 'Calendar URL');
+         .setDesc(this.calendarType === 'vdir' ? 'Select the folder containing ICS files. Must be in the current Obdidian Vault and have at least one ics.' : 'Enter the URL of the calendar')
+        .setName(this.calendarType === 'vdir' ? 'Vault Folder' : 'Calendar URL');
       urlSetting.settingEl.addClass('url-setting');
 
       if (this.calendarType === 'vdir') {
