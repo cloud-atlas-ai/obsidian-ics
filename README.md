@@ -12,21 +12,6 @@ I highly recommend pairing this with the [Day Planner](https://github.com/ivan-l
 
 This plugin is in the community plugin browser in Obsidian. Search for ICS and you can install it from there.
 
-### Using BRAT
-
-If you want to try out beta releases, you can use the [BRAT](https://github.com/TfTHacker/obsidian42-brat) plugin.
-
-1. Install the BRAT plugin
-    1. Open `Settings` -> `Community Plugins`
-    2. Disable safe mode, if enabled
-    3. *Browse*, and search for "BRAT"
-    4. Install the latest version of **Obsidian42 - BRAT**
-2. Open BRAT settings (`Settings` -> `BRAT`)
-    1. Scroll to the `Beta Plugin List` section
-    2. `Add Beta Plugin`
-    3. Specify this repository: `cloud-atlas-ai/obsidian-ics`
-3. Enable the `Amazing Marvin` plugin (`Settings` -> `Community Plugins`)
-
 ## Setup
 
 ### Get Your Google Calendar URL
@@ -36,7 +21,7 @@ If you want to try out beta releases, you can use the [BRAT](https://github.com/
 4. Once on the Settings Page, you should find yourself on the specific calendar's "Settings for my calendars" view. On the left-hand side of the page, click the  "Integrate Calendar" button.
 5. On this page, click on the "copy" button next to the "Secret Address in iCal Format". Google Calendar will give you a warning about not sharing it with anyone.
 
-### Within Obiidian Plug-In Options
+### Obsidian Plugin Setup
 1. Click the "+" button to add a new calendar.
 2. Choose a name for the calendar, select "Calendar Type" as "Remote URL", and then paste the Secret Address URL into the box labeled "Calendar URL". 
 3. Customize your format settings for the specific calendar. These tie to the Output Format for that specific calendar:  whether to include a checkbox for each scheduled item, the event end time, the calendar name, event summary, event location, event description
@@ -105,6 +90,21 @@ const events = (await icsPlugin.getEvents(...thisWeek))
 )
 renderCalendar(this.container, {events}).render()
 ```
+
+### Using BRAT
+
+If you want to try out beta releases, you can use the [BRAT](https://github.com/TfTHacker/obsidian42-brat) plugin.
+
+1. Install the BRAT plugin
+    1. Open `Settings` -> `Community Plugins`
+    2. Disable safe mode, if enabled
+    3. *Browse*, and search for "BRAT"
+    4. Install the latest version of **Obsidian42 - BRAT**
+2. Open BRAT settings (`Settings` -> `BRAT`)
+    1. Scroll to the `Beta Plugin List` section
+    2. `Add Beta Plugin`
+    3. Specify this repository: `cloud-atlas-ai/obsidian-ics`
+3. Enable the `Amazing Marvin` plugin (`Settings` -> `Community Plugins`)
 
 ## Support
 
