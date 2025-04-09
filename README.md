@@ -12,28 +12,22 @@ I highly recommend pairing this with the [Day Planner](https://github.com/ivan-l
 
 This plugin is in the community plugin browser in Obsidian. Search for ICS and you can install it from there.
 
-### Using BRAT
-
-If you want to try out beta releases, you can use the [BRAT](https://github.com/TfTHacker/obsidian42-brat) plugin.
-
-1. Install the BRAT plugin
-    1. Open `Settings` -> `Community Plugins`
-    2. Disable safe mode, if enabled
-    3. *Browse*, and search for "BRAT"
-    4. Install the latest version of **Obsidian42 - BRAT**
-2. Open BRAT settings (`Settings` -> `BRAT`)
-    1. Scroll to the `Beta Plugin List` section
-    2. `Add Beta Plugin`
-    3. Specify this repository: `cloud-atlas-ai/obsidian-ics`
-3. Enable the `Amazing Marvin` plugin (`Settings` -> `Community Plugins`)
-
 ## Setup
 
-1. From Google Calendar, look for the calendar in the left sidebar click the vertical … menu, Settings and Sharing, Integrate calendar, Copy the Secret address in iCal format
-2. Enter that URL into settings with a calendar name
-3. Customize your format settings. Some are per calendar, others are for all calendars.
-   - Per calendar settings: Whether to include a checkbox, the event end time, the calendar name, event summary, event location, event description
-   - General output settings: Time [format](https://momentjs.com/docs/#/displaying/) and emitting start and end as Dataview Metadata.
+### Get Your Google Calendar URL
+1. From [Google Calendar](https://calendar.google.com), look on the left-hand side for the "My Calendars" section.
+2. Within that list, find the Calendar that you want to integrate into Obsidian.
+3. Click on the Three Dots Menu (on the right of the calendar name), then click on 'Settings'.
+4. Once on the Settings Page, you should find yourself on the specific calendar's "Settings for my calendars" view. On the left-hand side of the page, click the  "Integrate Calendar" button.
+5. On this page, click on the "copy" button next to the "Secret Address in iCal Format". Google Calendar will give you a warning about not sharing it with anyone.
+
+### Obsidian Plugin Setup
+1. Click the "+" button to add a new calendar.
+2. Choose a name for the calendar, select "Calendar Type" as "Remote URL", and then paste the Secret Address URL into the box labeled "Calendar URL". 
+3. Customize your format settings for the specific calendar. These tie to the Output Format for that specific calendar:  whether to include a checkbox for each scheduled item, the event end time, the calendar name, event summary, event location, event description
+4. Click "Save" at the bottom of the specific Calendar's view.
+5. On the main ICS page, select your time [format](https://momentjs.com/docs/#/displaying/) and whether to emit start and end times as Dataview Metadata. See the below screenshot.
+6. Once you've done all of this, use the `ICS: Import events` command. If it shows nothing, check to make sure your iCal URL is the secret URL as that commonly is the issue.
 
 ![Settings Screenshot](https://github.com/cloud-atlas-ai/obsidian-ics/blob/master/docs/2023-09-03-settings.png?raw=true)
 
@@ -41,7 +35,7 @@ If you want to try out beta releases, you can use the [BRAT](https://github.com/
 
 Go to a daily note, use the `ICS: Import events` command.
 
-For customizations not available to the formatting, use Dataview or Templater (see below). Likewise, if you want to automatically import events when you create your daily notes, you'll want to use one of those. If you have issues using Data view or Templater, test that your calendar imports works using the `ICS: Import events` command as there's more error handling available there.
+For customizations not available to the formatting, use Dataview or Templater (see below). Likewise, if you want to automatically import events when you create your daily notes, you'll want to use one of those. If you have issues using Dataview or Templater, test that your calendar imports works using the `ICS: Import events` command as there's more error handling available there.
 
 ### Data view usage
 
@@ -96,6 +90,21 @@ const events = (await icsPlugin.getEvents(...thisWeek))
 )
 renderCalendar(this.container, {events}).render()
 ```
+
+### Using BRAT
+
+If you want to try out beta releases, you can use the [BRAT](https://github.com/TfTHacker/obsidian42-brat) plugin.
+
+1. Install the BRAT plugin
+    1. Open `Settings` -> `Community Plugins`
+    2. Disable safe mode, if enabled
+    3. *Browse*, and search for "BRAT"
+    4. Install the latest version of **Obsidian42 - BRAT**
+2. Open BRAT settings (`Settings` -> `BRAT`)
+    1. Scroll to the `Beta Plugin List` section
+    2. `Add Beta Plugin`
+    3. Specify this repository: `cloud-atlas-ai/obsidian-ics`
+3. Enable the `Amazing Marvin` plugin (`Settings` -> `Community Plugins`)
 
 ## Support
 
