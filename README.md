@@ -23,7 +23,7 @@ This plugin is in the community plugin browser in Obsidian. Search for ICS and y
 
 ### Obsidian Plugin Setup
 1. Click the "+" button to add a new calendar.
-2. Choose a name for the calendar, select "Calendar Type" as "Remote URL", and then paste the Secret Address URL into the box labeled "Calendar URL". 
+2. Choose a name for the calendar, select "Calendar Type" as "Remote URL", and then paste the Secret Address URL into the box labeled "Calendar URL".
 3. Customize your format settings for the specific calendar. These tie to the Output Format for that specific calendar:  whether to include a checkbox for each scheduled item, the event end time, the calendar name, event summary, event location, event description
 4. Click "Save" at the bottom of the specific Calendar's view.
 5. On the main ICS page, select your time [format](https://momentjs.com/docs/#/displaying/) and whether to emit start and end times as Dataview Metadata. See the below screenshot.
@@ -42,7 +42,7 @@ For customizations not available to the formatting, use Dataview or Templater (s
 You can also use a [Dataview](https://blacksmithgu.github.io/obsidian-dataview/) to add your events to your journal notes when they get created. For examples, if you use the core Templates plugin you can add the following to add events to your daily note template:
 
 ```dataviewjs
-var events = await app.plugins.getPlugin('ics').getEvents(dv.current().file.day);
+var events = await app.plugins.getPlugin('ics').getEvents(dv.current().file.name);
 var mdArray = [];
 events.forEach((e) => {
   mdArray.push(`${e.time} ${e.summary} ${e.location}: ${e.description}`.trim())
