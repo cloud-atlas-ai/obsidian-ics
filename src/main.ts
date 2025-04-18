@@ -69,6 +69,10 @@ export default class ICSPlugin extends Plugin {
 
 
   async getEvents(...dates: string[]): Promise<IEvent[]> {
+    if (dates.length === 0 || dates.some(date => !date)) {
+      new Notice("⚠️ ICS Plugin: No valid date provided to getEvents(). Please ensure a proper date is passed in the format 'YYYY-MM-DD'. Using the current date.", 10000);
+    }
+
     let events: IEvent[] = [];
     let errorMessages: string[] = []; // To store error messages
 
