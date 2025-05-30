@@ -27,15 +27,14 @@ export function extractMeetingInfo(e: any): { callUrl: string, callType: string 
 }
 
 function applyRecurrenceDateAndTimezone(originalDate: Date, currentDate: Date, tzid: string): Date {
-  const momentOriginal = tz(originalDate, tzid);
-  const momentCurrent = tz(currentDate, tzid);
+  const originalMoment = tz(originalDate, tzid);
 
-  // Calculate the difference in hours and minutes between the original and current
-  const hourOffset = momentOriginal.hour() - momentCurrent.hour();
-  const minuteOffset = momentOriginal.minute() - momentCurrent.minute();
+  // Create a moment in the target timezone using just the date components of currentDate
+  // This avoids timezone conversion issues with the recurrence date
+  const currentDateMoment = moment.utc(currentDate);
+  const adjustedMoment = tz(`${currentDateMoment.format('YYYY-MM-DD')} ${originalMoment.format('HH:mm:ss')}`, tzid);
 
-  // Adjust the current date by the offset to keep the local time constant
-  return momentCurrent.add(hourOffset, 'hours').add(minuteOffset, 'minutes').toDate();
+  return adjustedMoment.toDate();
 }
 
 function isExcluded(recurrenceDate: moment.Moment, exdateArray: moment.Moment[]): boolean {
@@ -65,29 +64,35 @@ function processRecurrenceOverrides(event: any, sortedDaysToMatch: string[], exc
 }
 
 function processRecurringRules(event: any, sortedDaysToMatch: string[], excludedDates: moment.Moment[], matchingEvents: any[]) {
-  const localStartOfRange = moment(sortedDaysToMatch.first()).subtract(1, 'day').startOf('day').toDate();
-  const localEndOfRange = moment(sortedDaysToMatch.last()).add(1, 'day').endOf('day').toDate();
+  const tzid = event.rrule.origOptions.tzid || 'UTC';
+
+  // Use UTC for rrule calculations to avoid timezone offset issues
+  const startOfRange = moment.utc(sortedDaysToMatch.first()).subtract(1, 'day').startOf('day').toDate();
+  const endOfRange = moment.utc(sortedDaysToMatch.last()).add(1, 'day').endOf('day').toDate();
 
   // Get recurrence dates within the range
-  const recurrenceDates = event.rrule.between(localStartOfRange, localEndOfRange, true);
+  const recurrenceDates = event.rrule.between(startOfRange, endOfRange, true);
 
   recurrenceDates.forEach(recurrenceDate => {
-    const recurrenceMoment = tz(recurrenceDate, event.rrule.origOptions.tzid || 'UTC');
-
-    // Clone the event and use the recurrence date directly if start and end times are present
-    const clonedEvent = { ...event };
-    clonedEvent.start = applyRecurrenceDateAndTimezone(event.start, recurrenceDate, event.rrule.origOptions.tzid);
-    clonedEvent.end = applyRecurrenceDateAndTimezone(event.end, recurrenceDate, event.rrule.origOptions.tzid);
+    const recurrenceMoment = tz(recurrenceDate, tzid).startOf('day');
 
     if (isExcluded(recurrenceMoment, excludedDates)) {
       console.debug(`Skipping excluded recurrence: ${event.summary} on ${recurrenceMoment.format('YYYY-MM-DD')}`);
       return;
     }
 
+    // Clone the event and apply proper timezone-aware date/time calculation
+    const clonedEvent = { ...event };
+    clonedEvent.start = applyRecurrenceDateAndTimezone(event.start, recurrenceDate, tzid);
+    clonedEvent.end = applyRecurrenceDateAndTimezone(event.end, recurrenceDate, tzid);
+
     delete clonedEvent.rrule;
     clonedEvent.recurrent = true;
 
-    if (moment(clonedEvent.start).isBetween(sortedDaysToMatch.first(), sortedDaysToMatch.last(), 'day', '[]')) {
+    // Check if the recurrence falls within the requested date range using timezone-aware comparison
+    const eventStartMoment = tz(clonedEvent.start, tzid);
+    const eventStartDate = eventStartMoment.format('YYYY-MM-DD');
+    if (sortedDaysToMatch.includes(eventStartDate)) {
       console.debug(`Adding recurring event: ${clonedEvent.summary} ${clonedEvent.start} - ${clonedEvent.end}`);
       console.debug("Excluded dates:", excludedDates.map(date => date.format('YYYY-MM-DD')));
 
