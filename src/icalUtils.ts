@@ -55,7 +55,7 @@ function processRecurrenceOverrides(event: any, sortedDaysToMatch: string[], exc
     recurrence.recurrent = true;
 
     // Check if this override matches the dayToMatch
-    if (moment(recurrence.start).isBetween(sortedDaysToMatch.first(), sortedDaysToMatch.last(), "day", "[]")) {
+    if (moment(recurrence.start).isBetween(sortedDaysToMatch[0], sortedDaysToMatch[sortedDaysToMatch.length - 1], "day", "[]")) {
       console.debug(`Adding recurring event with override: ${recurrence.summary} on ${recurrenceMoment.format('YYYY-MM-DD')}`);
       recurrence.eventType = "recurring override";
       matchingEvents.push(recurrence);
@@ -67,8 +67,8 @@ function processRecurringRules(event: any, sortedDaysToMatch: string[], excluded
   const tzid = event.rrule.origOptions.tzid || 'UTC';
 
   // Use UTC for rrule calculations to avoid timezone offset issues
-  const startOfRange = moment.utc(sortedDaysToMatch.first()).subtract(1, 'day').startOf('day').toDate();
-  const endOfRange = moment.utc(sortedDaysToMatch.last()).add(1, 'day').endOf('day').toDate();
+  const startOfRange = moment.utc(sortedDaysToMatch[0]).subtract(1, 'day').startOf('day').toDate();
+  const endOfRange = moment.utc(sortedDaysToMatch[sortedDaysToMatch.length - 1]).add(1, 'day').endOf('day').toDate();
 
   // Get recurrence dates within the range
   const recurrenceDates = event.rrule.between(startOfRange, endOfRange, true);
@@ -142,7 +142,7 @@ export function filterMatchingEvents(icsArray: any[], daysToMatch: string[], sho
     }
 
     // Process non-recurring events
-    if (!event.recurrences && !event.rrule && moment(event.start).isBetween(sortedDaysToMatch.first(), sortedDaysToMatch.last(), "day", "[]")) {
+    if (!event.recurrences && !event.rrule && moment(event.start).isBetween(sortedDaysToMatch[0], sortedDaysToMatch[sortedDaysToMatch.length - 1], "day", "[]")) {
       console.debug("Adding one-off event:", {
         summary: event.summary,
         start: event.start,
@@ -164,8 +164,8 @@ export function filterMatchingEvents(icsArray: any[], daysToMatch: string[], sho
 }
 
 export function parseIcs(ics: string) {
-  var data = ical.parseICS(ics);
-  var vevents = [];
+  const data = ical.parseICS(ics);
+  const vevents = [];
 
   for (let i in data) {
     if (data[i].type != "VEVENT")
