@@ -1,0 +1,6 @@
+# Branch Management Rule
+When working on an issue and currently on the master branch, always create a new feature branch first.
+
+Use the format: `git checkout -b issue-{issue-number}` or `git checkout -b feature-{description}`
+
+This helps maintain a clean master branch and enables proper pull request workflows.
