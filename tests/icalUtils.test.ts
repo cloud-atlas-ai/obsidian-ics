@@ -1,4 +1,5 @@
 import { parseIcs, filterMatchingEvents, extractMeetingInfo } from '../src/icalUtils';
+import { moment } from 'obsidian';
 
 describe('icalUtils', () => {
   describe('parseIcs', () => {
@@ -197,4 +198,6 @@ END:VCALENDAR`;
       expect(results[3]).toHaveLength(1); // Should appear
     });
   });
+
+
 });
