@@ -21,6 +21,13 @@ This plugin is in the community plugin browser in Obsidian. Search for ICS and y
 4. Once on the Settings Page, you should find yourself on the specific calendar's "Settings for my calendars" view. On the left-hand side of the page, click the  "Integrate Calendar" button.
 5. On this page, click on the "copy" button next to the "Secret Address in iCal Format". Google Calendar will give you a warning about not sharing it with anyone.
 
+### Get your Microsoft Office 365 Calendar URL
+1.  From [Outlook Web App](https://outlook.office.com/), click the gear in the upper right to open the settings panel
+2.  Select Calendar on the left, then Shared Calendars in the middle
+3.  In the Publish a Calendar section, select the calendar and permissions you want based on the data you want Obsidian to have access to.
+4.  Click Publish
+5.  Copy the ICS URL
+
 ### Obsidian Plugin Setup
 1. Click the "+" button to add a new calendar.
 2. Choose a name for the calendar, select "Calendar Type" as "Remote URL", and then paste the Secret Address URL into the box labeled "Calendar URL".
