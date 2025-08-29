@@ -8,6 +8,20 @@ This  is designed to work with the Daily Note or [Periodic Notes](https://github
 
 I highly recommend pairing this with the [Day Planner](https://github.com/ivan-lednev/obsidian-day-planner) plugin: the output format is tuned to support it and you'll get support for seeing the day and week planners.
 
+## Why You Might Want to Use This Plugin
+
+There are many calendar integration plugins available for Obsidian, some with more features and bells and whistles. This plugin focuses on a different philosophy: **clean, maintainable code that adapts to user expectations rather than forcing users to adapt to the plugin**.
+
+Key advantages of this approach include:
+
+- **User-Friendly API**: The `getEvents()` method accepts date strings, moment objects, or Date objects - whatever is most natural for your use case
+- **Performance Through Simplicity**: Support for vdir (local calendar cache) enables lightning-fast workflows by treating your local calendar files as a cache
+- **Power User Friendly**: Designed for customization and automation through Templater and Dataview rather than trying to be everything to everyone
+- **Focused Feature Set**: Does one thing well - importing calendar events into notes - rather than trying to be a full calendar management system
+- **Predictable Behavior**: Clean, testable code that behaves consistently across different environments
+
+If you value simplicity, performance, and the ability to customize your calendar integration exactly how you want it, this plugin might be a good fit for your workflow.
+
 ## Installation
 
 This plugin is in the community plugin browser in Obsidian. Search for ICS and you can install it from there.
@@ -39,10 +53,22 @@ For customizations not available to the formatting, use Dataview or Templater (s
 
 ### Data view usage
 
-You can also use a [Dataview](https://blacksmithgu.github.io/obsidian-dataview/) to add your events to your journal notes when they get created. For examples, if you use the core Templates plugin you can add the following to add events to your daily note template:
+You can also use a [Dataview](https://blacksmithgu.github.io/obsidian-dataview/) to add your events to your journal notes when they get created. 
+
+**The `getEvents()` method accepts flexible date inputs**: date strings (like "2025-03-01" or "March 1, 2025"), moment objects, or JavaScript Date objects. This makes it easy to work with whatever date format is most convenient for your use case.
+
+For example, if you use the core Templates plugin you can add the following to add events to your daily note template:
 
 ```dataviewjs
+// Simple string-based approach
 var events = await app.plugins.getPlugin('ics').getEvents(dv.current().file.name);
+
+// Or use a Date object for today's events
+var events = await app.plugins.getPlugin('ics').getEvents(new Date());
+
+// Or use moment for date manipulation
+var events = await app.plugins.getPlugin('ics').getEvents(moment().add(1, 'day'));
+
 var mdArray = [];
 events.forEach((e) => {
   mdArray.push(`${e.time} ${e.summary} ${e.location}: ${e.description}`.trim())
@@ -54,11 +80,24 @@ You can see the available fields in the [Event interface](https://github.com/clo
 
 ### Templater
 
-Or you can use [Templater](https://github.com/SilentVoid13/Templater):
+You can use [Templater](https://github.com/SilentVoid13/Templater) with flexible date inputs. The `getEvents()` method now accepts moment objects directly, so you don't need to convert them to strings:
 
 ```javascript
 <%*
-var events = await app.plugins.getPlugin('ics').getEvents(moment(tp.file.title,'YYYY-MM-DD'));
+// Direct moment object usage (recommended)
+var events = await app.plugins.getPlugin('ics').getEvents(moment(tp.file.title,'YYYYMMDD'));
+events.sort((a,b) => a.utime - b.utime).forEach((e) => {
+  tR+=`- [ ] ${e.time} ${e.summary} ${e.location? e.location : ''}\n`
+})
+%>
+```
+
+If you prefer to use string dates or need to handle different date formats, you can also do:
+
+```javascript
+<%*
+// String format (also works)
+var events = await app.plugins.getPlugin('ics').getEvents(moment(tp.file.title,'YYYYMMDD').format('YYYY-MM-DD'));
 events.sort((a,b) => a.utime - b.utime).forEach((e) => {
   tR+=`- [ ] ${e.time} ${e.summary} ${e.location? e.location : ''}\n`
 })
