@@ -20,7 +20,8 @@ import {
   request
 } from 'obsidian';
 import { parseIcs, filterMatchingEvents, extractMeetingInfo } from './icalUtils';
-import { IEvent, IAttendee } from './IEvent';
+import { IEvent } from './IEvent';
+import { DateNormalizer, FlexibleDateInput } from './DateNormalizer';
 
 export default class ICSPlugin extends Plugin {
   data: ICSSettings;
@@ -68,13 +69,23 @@ export default class ICSPlugin extends Plugin {
   }
 
 
-  async getEvents(...dates: string[]): Promise<IEvent[]> {
+  async getEvents(...dates: FlexibleDateInput[]): Promise<IEvent[]> {
     if (dates.length === 0 || dates.some(date => !date)) {
-      new Notice("⚠️ ICS Plugin: No valid date provided to getEvents(). Please ensure a proper date is passed in the format 'YYYY-MM-DD'. Using the current date.", 10000);
+      new Notice(`⚠️ ICS Plugin: No valid date provided to getEvents(). ${DateNormalizer.getSupportedFormatsDescription()}`, 10000);
     }
 
-    let events: IEvent[] = [];
-    let errorMessages: string[] = []; // To store error messages
+    // Normalize all date inputs to YYYY-MM-DD string format
+    let normalizedDates: string[];
+    try {
+      normalizedDates = DateNormalizer.normalizeDateInputs(dates);
+    } catch (error) {
+      new Notice(`⚠️ ICS Plugin: Error parsing date inputs: ${error.message}`, 10000);
+      console.error("Date parsing error:", error);
+      return [];
+    }
+
+    const events: IEvent[] = [];
+    const errorMessages: string[] = []; // To store error messages
 
     for (const calendar in this.data.calendars) {
       const calendarSetting = this.data.calendars[calendar];
@@ -92,16 +103,16 @@ export default class ICSPlugin extends Plugin {
           // Existing logic for remote URLs
           icsArray = parseIcs(await request({ url: calendarSetting.icsUrl }));
         }
-      } catch (error) {
-        console.error(`Error processing calendar ${calendarSetting.icsName}: ${error}`);
+      } catch (processingError) {
+        console.error(`Error processing calendar ${calendarSetting.icsName}: ${processingError}`);
         errorMessages.push(`Error processing calendar "${calendarSetting.icsName}"`);
       }
 
-      var dateEvents;
+      let dateEvents;
 
       // Exception handling for parsing and filtering
       try {
-        dateEvents = dateEvents = filterMatchingEvents(icsArray, dates, calendarSetting.format.showOngoing)
+        dateEvents = filterMatchingEvents(icsArray, normalizedDates, calendarSetting.format.showOngoing)
           .filter(e => this.excludeTransparentEvents(e, calendarSetting))
           .filter(e => this.excludeDeclinedEvents(e, calendarSetting));
 

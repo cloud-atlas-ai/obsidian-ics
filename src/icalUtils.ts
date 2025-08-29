@@ -1,4 +1,4 @@
-const ical = require('node-ical');
+import * as ical from 'node-ical';
 import { tz } from 'moment-timezone';
 import { moment } from "obsidian";
 
@@ -167,7 +167,7 @@ export function parseIcs(ics: string) {
   const data = ical.parseICS(ics);
   const vevents = [];
 
-  for (let i in data) {
+  for (const i in data) {
     if (data[i].type != "VEVENT")
       continue;
     vevents.push(data[i]);
