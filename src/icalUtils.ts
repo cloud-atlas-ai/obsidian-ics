@@ -1,6 +1,7 @@
 import * as ical from 'node-ical';
 import { tz } from 'moment-timezone';
 import { moment } from "obsidian";
+import { WINDOWS_TO_IANA_TIMEZONES } from './generated/windowsTimezones';
 
 export function extractMeetingInfo(e: any): { callUrl: string, callType: string } {
 
@@ -163,14 +164,76 @@ export function filterMatchingEvents(icsArray: any[], daysToMatch: string[], sho
   }, []);
 }
 
-export function parseIcs(ics: string) {
-  const data = ical.parseICS(ics);
-  const vevents = [];
+function preprocessMicrosoftIcs(ics: string): string {
+  // Microsoft Office 365 can generate ICS files with timezone names that contain spaces
+  // and other characters that cause issues with node-ical parsing.
+  // This function preprocesses the ICS content to handle these issues.
+  //
+  // Uses official Unicode CLDR Windows to IANA timezone mappings
+  // Source: https://github.com/unicode-org/cldr/blob/main/common/supplemental/windowsZones.xml
 
-  for (const i in data) {
-    if (data[i].type != "VEVENT")
-      continue;
-    vevents.push(data[i]);
+  const timezoneReplacements = WINDOWS_TO_IANA_TIMEZONES;
+
+  let processedIcs = ics;
+
+  // Replace timezone IDs in TZID definitions and references
+  for (const [microsoftTz, ianaTz] of Object.entries(timezoneReplacements)) {
+    // Replace in TZID definitions
+    processedIcs = processedIcs.replace(
+      new RegExp(`TZID:${microsoftTz.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`, 'g'),
+      `TZID:${ianaTz}`
+    );
+
+    // Replace in TZID references (DTSTART, DTEND, RECURRENCE-ID, etc.)
+    processedIcs = processedIcs.replace(
+      new RegExp(`;TZID=${microsoftTz.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}:`, 'g'),
+      `;TZID=${ianaTz}:`
+    );
   }
-  return vevents;
+
+  return processedIcs;
+}
+
+export function parseIcs(ics: string) {
+  try {
+    // First, try parsing the ICS as-is
+    const data = ical.parseICS(ics);
+    const vevents = [];
+
+    for (const i in data) {
+      if (data[i].type != "VEVENT")
+        continue;
+      vevents.push(data[i]);
+    }
+    return vevents;
+  } catch (error) {
+    // If parsing fails with a timezone-related error, try preprocessing
+    if (error instanceof TypeError &&
+        (error.message.includes('startsWith') ||
+         error.message.includes('tz'))) {
+
+      console.warn('ICS parsing failed with timezone error, attempting preprocessing:', error.message);
+
+      try {
+        const preprocessedIcs = preprocessMicrosoftIcs(ics);
+        const data = ical.parseICS(preprocessedIcs);
+        const vevents = [];
+
+        for (const i in data) {
+          if (data[i].type != "VEVENT")
+            continue;
+          vevents.push(data[i]);
+        }
+
+        console.log('Successfully parsed ICS after preprocessing');
+        return vevents;
+      } catch (preprocessError) {
+        console.error('Failed to parse ICS even after preprocessing:', preprocessError);
+        throw new Error(`ICS parsing failed: ${error.message}. Preprocessing also failed: ${preprocessError.message}`);
+      }
+    } else {
+      // Re-throw non-timezone related errors
+      throw error;
+    }
+  }
 }
