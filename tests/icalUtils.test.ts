@@ -1,4 +1,5 @@
 import { parseIcs, filterMatchingEvents, extractMeetingInfo } from '../src/icalUtils';
+import { DEFAULT_VIDEO_CALL_PATTERNS } from '../src/settings/ICSSettings';
 import { moment } from 'obsidian';
 
 describe('icalUtils', () => {
@@ -100,7 +101,7 @@ END:VCALENDAR`;
         'GOOGLE-CONFERENCE': 'https://meet.google.com/abc-defg-hij'
       };
 
-      const { callUrl, callType } = extractMeetingInfo(event);
+      const { callUrl, callType } = extractMeetingInfo(event, DEFAULT_VIDEO_CALL_PATTERNS);
       expect(callUrl).toBe('https://meet.google.com/abc-defg-hij');
       expect(callType).toBe('Google Meet');
     });
@@ -110,7 +111,7 @@ END:VCALENDAR`;
         location: 'https://zoom.us/j/123456789'
       };
 
-      const { callUrl, callType } = extractMeetingInfo(event);
+      const { callUrl, callType } = extractMeetingInfo(event, DEFAULT_VIDEO_CALL_PATTERNS);
       expect(callUrl).toBe('https://zoom.us/j/123456789');
       expect(callType).toBe('Zoom');
     });
@@ -120,7 +121,7 @@ END:VCALENDAR`;
         description: 'Join the meeting: https://join.skype.com/abc123def'
       };
 
-      const { callUrl, callType } = extractMeetingInfo(event);
+      const { callUrl, callType } = extractMeetingInfo(event, DEFAULT_VIDEO_CALL_PATTERNS);
       expect(callUrl).toBe('https://join.skype.com/abc123def');
       expect(callType).toBe('Skype');
     });
@@ -130,7 +131,7 @@ END:VCALENDAR`;
         description: 'Microsoft Teams meeting: https://teams.microsoft.com/l/meetup-join/abc123def'
       };
 
-      const { callUrl, callType } = extractMeetingInfo(event);
+      const { callUrl, callType } = extractMeetingInfo(event, DEFAULT_VIDEO_CALL_PATTERNS);
       expect(callUrl).toBe('https://teams.microsoft.com/l/meetup-join/abc123def');
       expect(callType).toBe('Microsoft Teams');
     });
@@ -140,7 +141,7 @@ END:VCALENDAR`;
         summary: 'Regular meeting'
       };
 
-      const { callUrl, callType } = extractMeetingInfo(event);
+      const { callUrl, callType } = extractMeetingInfo(event, DEFAULT_VIDEO_CALL_PATTERNS);
       expect(callUrl).toBeNull();
       expect(callType).toBeNull();
     });

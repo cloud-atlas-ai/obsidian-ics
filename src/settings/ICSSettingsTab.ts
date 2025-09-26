@@ -11,7 +11,9 @@ import {
 
 import {
   Calendar,
-  DEFAULT_CALENDAR_FORMAT
+  DEFAULT_CALENDAR_FORMAT,
+  CallUrlPattern,
+  DEFAULT_VIDEO_CALL_PATTERNS
 } from "./ICSSettings";
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 import moment = require("moment");
@@ -67,6 +69,105 @@ export default class ICSSettingsTab extends PluginSettingTab {
 
   private updateTimeFormatExample() {
     this.timeFormatExample.innerText = moment(new Date()).format(this.plugin.data.format.timeFormat);
+  }
+
+  private displayVideoCallPatterns(containerEl: HTMLElement) {
+    const patternsContainer = containerEl.createDiv("video-call-patterns");
+
+    // Ensure patterns exist, use defaults if not
+    if (!this.plugin.data.videoCallExtraction?.patterns) {
+      if (!this.plugin.data.videoCallExtraction) {
+        this.plugin.data.videoCallExtraction = {
+          enabled: true,
+          patterns: DEFAULT_VIDEO_CALL_PATTERNS
+        };
+      } else {
+        this.plugin.data.videoCallExtraction.patterns = DEFAULT_VIDEO_CALL_PATTERNS;
+      }
+    }
+
+    const patterns = this.plugin.data.videoCallExtraction.patterns;
+
+    // Add new pattern button
+    new Setting(patternsContainer)
+      .setName("Add URL Pattern")
+      .setDesc("Add a new pattern to extract video call URLs")
+      .addButton((button: ButtonComponent): ButtonComponent => {
+        return button
+          .setTooltip("Add Pattern")
+          .setButtonText("+")
+          .onClick(async () => {
+            const modal = new VideoCallPatternModal(this.app, this.plugin);
+            modal.onClose = async () => {
+              if (modal.saved) {
+                patterns.push(modal.pattern);
+                await this.plugin.saveSettings();
+                this.display();
+              }
+            };
+            modal.open();
+          });
+      });
+
+    // Reset to defaults button
+    new Setting(patternsContainer)
+      .setName("Reset to Defaults")
+      .setDesc("Reset all patterns to default video call providers")
+      .addButton((button: ButtonComponent): ButtonComponent => {
+        return button
+          .setButtonText("Reset")
+          .setWarning()
+          .onClick(async () => {
+            this.plugin.data.videoCallExtraction.patterns = [...DEFAULT_VIDEO_CALL_PATTERNS];
+            await this.plugin.saveSettings();
+            this.display();
+          });
+      });
+
+    // Display existing patterns sorted by priority
+    const sortedPatterns = [...patterns].sort((a, b) => a.priority - b.priority);
+    sortedPatterns.forEach((pattern, index) => {
+      const setting = new Setting(patternsContainer);
+
+      setting.setName(pattern.name)
+        .setDesc(`${pattern.matchType === 'regex' ? 'Regex' : 'Contains'}: ${pattern.pattern} (Priority: ${pattern.priority})`)
+        .addToggle(toggle => toggle
+          .setValue(pattern.enabled)
+          .onChange(async (v) => {
+            pattern.enabled = v;
+            await this.plugin.saveSettings();
+          }))
+        .addExtraButton((b) => {
+          b.setIcon("pencil")
+            .setTooltip("Edit")
+            .onClick(() => {
+              const modal = new VideoCallPatternModal(this.app, this.plugin, pattern);
+              modal.onClose = async () => {
+                if (modal.saved) {
+                  const originalIndex = patterns.findIndex(p => p === pattern);
+                  if (originalIndex !== -1) {
+                    patterns[originalIndex] = modal.pattern;
+                    await this.plugin.saveSettings();
+                    this.display();
+                  }
+                }
+              };
+              modal.open();
+            });
+        })
+        .addExtraButton((b) => {
+          b.setIcon("trash")
+            .setTooltip("Delete")
+            .onClick(async () => {
+              const patternIndex = patterns.findIndex(p => p === pattern);
+              if (patternIndex !== -1) {
+                patterns.splice(patternIndex, 1);
+                await this.plugin.saveSettings();
+                this.display();
+              }
+            });
+        });
+    });
   }
 
   private dataViewSyntaxDescription(): DocumentFragment {
@@ -193,6 +294,36 @@ export default class ICSSettingsTab extends PluginSettingTab {
           this.plugin.data.format.dataViewSyntax = v;
           await this.plugin.saveSettings();
         }));
+
+    // Video Call URL Extraction Settings
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const videoCallSetting = new Setting(containerEl)
+      .setHeading().setName("Video Call URL Extraction");
+
+    // Enable/disable toggle
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const videoCallEnabledSetting = new Setting(containerEl)
+      .setName('Enable Video Call URL Extraction')
+      .setDesc('Extract video call URLs from calendar events')
+      .addToggle(toggle => toggle
+        .setValue(this.plugin.data.videoCallExtraction?.enabled ?? true)
+        .onChange(async (v) => {
+          if (!this.plugin.data.videoCallExtraction) {
+            this.plugin.data.videoCallExtraction = {
+              enabled: v,
+              patterns: DEFAULT_VIDEO_CALL_PATTERNS
+            };
+          } else {
+            this.plugin.data.videoCallExtraction.enabled = v;
+          }
+          await this.plugin.saveSettings();
+          this.display(); // Refresh to show/hide patterns section
+        }));
+
+    // Only show patterns section if enabled
+    if (this.plugin.data.videoCallExtraction?.enabled !== false) {
+      this.displayVideoCallPatterns(containerEl);
+    }
 
     // Sponsor link - Thank you!
     const divSponsor = containerEl.createDiv();
@@ -518,5 +649,178 @@ class SettingsModal extends Modal {
         textInput.inputEl.parentElement.children[1]
       );
     }
+  }
+}
+
+class VideoCallPatternModal extends Modal {
+  plugin: ICSPlugin;
+  pattern: CallUrlPattern;
+  saved: boolean = false;
+  private hasChanges: boolean = false;
+
+  constructor(app: App, plugin: ICSPlugin, pattern?: CallUrlPattern) {
+    super(app);
+    this.plugin = plugin;
+
+    if (pattern) {
+      // Editing existing pattern
+      this.pattern = { ...pattern };
+    } else {
+      // Creating new pattern
+      const maxPriority = Math.max(...(this.plugin.data.videoCallExtraction?.patterns.map(p => p.priority) || [0]));
+      this.pattern = {
+        name: "",
+        pattern: "",
+        matchType: "contains",
+        enabled: true,
+        priority: maxPriority + 1
+      };
+    }
+  }
+
+  display() {
+    const { contentEl } = this;
+    contentEl.empty();
+
+    const settingDiv = contentEl.createDiv({ cls: 'video-call-pattern-settings' });
+
+    // Pattern name
+    let nameText: TextComponent;
+    new Setting(settingDiv)
+      .setName("Pattern Name")
+      .setDesc("Descriptive name for this pattern")
+      .addText((text) => {
+        nameText = text;
+        nameText.setValue(this.pattern.name).onChange((v) => {
+          this.pattern.name = v;
+          this.hasChanges = true;
+        });
+      });
+
+    // Match type
+    new Setting(settingDiv)
+      .setName("Match Type")
+      .setDesc("How to match the pattern")
+      .addDropdown(dropdown => {
+        dropdown.addOption('contains', 'Contains');
+        dropdown.addOption('regex', 'Regular Expression');
+        dropdown.setValue(this.pattern.matchType)
+          .onChange(value => {
+            this.pattern.matchType = value as 'regex' | 'contains';
+            this.hasChanges = true;
+          });
+      });
+
+    // Pattern
+    let patternText: TextComponent;
+    new Setting(settingDiv)
+      .setName("Pattern")
+      .setDesc("The text or regex pattern to match in event location/description")
+      .addText((text) => {
+        patternText = text;
+        patternText.setValue(this.pattern.pattern).onChange((v) => {
+          this.pattern.pattern = v;
+          this.hasChanges = true;
+          this.validatePattern(patternText);
+        });
+      });
+
+    // Priority
+    let priorityText: TextComponent;
+    new Setting(settingDiv)
+      .setName("Priority")
+      .setDesc("Lower numbers have higher priority (checked first)")
+      .addText((text) => {
+        priorityText = text;
+        priorityText.setValue(this.pattern.priority.toString()).onChange((v) => {
+          const priority = parseInt(v);
+          if (!isNaN(priority)) {
+            this.pattern.priority = priority;
+            this.hasChanges = true;
+          }
+        });
+      });
+
+    // Enabled toggle
+    new Setting(settingDiv)
+      .setName("Enabled")
+      .setDesc("Whether this pattern is active")
+      .addToggle(toggle => toggle
+        .setValue(this.pattern.enabled)
+        .onChange(value => {
+          this.pattern.enabled = value;
+          this.hasChanges = true;
+        }));
+
+    // Footer buttons
+    const footerEl = contentEl.createDiv();
+    const footerButtons = new Setting(footerEl);
+    footerButtons.addButton((b) => {
+      b.setTooltip("Save")
+        .setIcon("save")
+        .onClick(async () => {
+          if (this.validateForm()) {
+            this.saved = true;
+            this.hasChanges = false;
+            this.close();
+          }
+        });
+      return b;
+    });
+    footerButtons.addExtraButton((b) => {
+      b.setTooltip("Cancel")
+        .setIcon("cross")
+        .onClick(() => {
+          this.saved = false;
+          this.close();
+        });
+      return b;
+    });
+  }
+
+  private validatePattern(textInput: TextComponent): boolean {
+    if (this.pattern.matchType === 'regex') {
+      try {
+        new RegExp(this.pattern.pattern);
+        SettingsModal.removeValidationError(textInput);
+        return true;
+      } catch (_e) {
+        SettingsModal.setValidationError(textInput, "Invalid regular expression");
+        return false;
+      }
+    }
+    SettingsModal.removeValidationError(textInput);
+    return true;
+  }
+
+  private validateForm(): boolean {
+    if (!this.pattern.name.trim()) {
+      return false;
+    }
+    if (!this.pattern.pattern.trim()) {
+      return false;
+    }
+    if (this.pattern.matchType === 'regex') {
+      try {
+        new RegExp(this.pattern.pattern);
+      } catch {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  onOpen() {
+    this.display();
+  }
+
+  close() {
+    if (this.hasChanges) {
+      const confirmDiscard = confirm('You have unsaved changes. Are you sure you want to discard them?');
+      if (!confirmDiscard) {
+        return; // Prevent the modal from closing
+      }
+    }
+    super.close();
   }
 }

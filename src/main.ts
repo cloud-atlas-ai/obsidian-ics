@@ -7,6 +7,7 @@ import {
   Calendar,
   ICSSettings,
   DEFAULT_SETTINGS,
+  DEFAULT_VIDEO_CALL_PATTERNS,
 } from "./settings/ICSSettings";
 
 import ICSSettingsTab from "./settings/ICSSettingsTab";
@@ -135,7 +136,8 @@ export default class ICSPlugin extends Plugin {
 
       try {
         dateEvents.forEach((e) => {
-          const { callUrl, callType } = extractMeetingInfo(e);
+          const patterns = this.data.videoCallExtraction?.enabled ? this.data.videoCallExtraction.patterns : [];
+          const { callUrl, callType } = extractMeetingInfo(e, patterns);
 
           const event: IEvent = {
             utime: moment(e.start).format('X'),
@@ -259,6 +261,33 @@ export default class ICSPlugin extends Plugin {
 
   async loadSettings() {
     this.data = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
+
+    // Migration: ensure videoCallExtraction settings exist and are hydrated
+    let needsSave = false;
+
+    if (!this.data.videoCallExtraction) {
+      this.data.videoCallExtraction = {
+        enabled: true,
+        patterns: [...DEFAULT_VIDEO_CALL_PATTERNS]
+      };
+      needsSave = true;
+    } else {
+      // Ensure patterns array exists
+      if (!this.data.videoCallExtraction.patterns) {
+        this.data.videoCallExtraction.patterns = [...DEFAULT_VIDEO_CALL_PATTERNS];
+        needsSave = true;
+      }
+
+      // Ensure enabled field exists
+      if (this.data.videoCallExtraction.enabled === undefined) {
+        this.data.videoCallExtraction.enabled = true;
+        needsSave = true;
+      }
+    }
+
+    if (needsSave) {
+      await this.saveData(this.data);
+    }
   }
 
   async saveSettings() {

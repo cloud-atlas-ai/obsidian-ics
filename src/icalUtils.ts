@@ -3,28 +3,75 @@ import { tz } from 'moment-timezone';
 import { moment } from "obsidian";
 import { WINDOWS_TO_IANA_TIMEZONES } from './generated/windowsTimezones';
 
-export function extractMeetingInfo(e: any): { callUrl: string, callType: string } {
+import { CallUrlPattern } from './settings/ICSSettings';
 
-  // Check for Google Meet conference data
-  if (e["GOOGLE-CONFERENCE"]) {
-    return { callUrl: e["GOOGLE-CONFERENCE"], callType: 'Google Meet' };
+export function extractMeetingInfo(e: any, patterns?: CallUrlPattern[]): { callUrl: string, callType: string } {
+  // If patterns not provided or empty, return null (extraction disabled)
+  if (!patterns || patterns.length === 0) {
+    return { callUrl: null, callType: null };
   }
-  // Check if the location contains a Zoom link
-  if (e.location && e.location.includes('zoom.us')) {
-    return { callUrl: e.location, callType: 'Zoom' };
-  }
-  if (e.description) {
-    const skypeMatch = e.description.match(/https:\/\/join.skype.com\/[a-zA-Z0-9]+/);
-    if (skypeMatch) {
-      return { callUrl: skypeMatch[0], callType: 'Skype' };
-    }
 
-    const teamsMatch = e.description.match(/(https:\/\/teams\.microsoft\.com\/l\/meetup-join\/[^>]+)/);
-    if (teamsMatch) {
-      return { callUrl: teamsMatch[0], callType: 'Microsoft Teams' };
+  // Sort patterns by priority (lower numbers = higher priority)
+  const sortedPatterns = patterns
+    .filter(p => p.enabled)
+    .sort((a, b) => a.priority - b.priority);
+
+  for (const pattern of sortedPatterns) {
+    const result = checkPattern(e, pattern);
+    if (result.callUrl) {
+      return result;
     }
   }
+
   return { callUrl: null, callType: null };
+}
+
+function checkPattern(e: any, pattern: CallUrlPattern): { callUrl: string, callType: string } {
+  // Special handling for Google Meet conference data
+  if (pattern.pattern === "GOOGLE-CONFERENCE" && e["GOOGLE-CONFERENCE"]) {
+    return { callUrl: e["GOOGLE-CONFERENCE"], callType: pattern.name };
+  }
+
+  // Check location field
+  if (e.location) {
+    const match = matchText(e.location, pattern);
+    if (match) {
+      return { callUrl: match, callType: pattern.name };
+    }
+  }
+
+  // Check description field
+  if (e.description) {
+    const match = matchText(e.description, pattern);
+    if (match) {
+      return { callUrl: match, callType: pattern.name };
+    }
+  }
+
+  return { callUrl: null, callType: null };
+}
+
+function matchText(text: string, pattern: CallUrlPattern): string | null {
+  try {
+    if (pattern.matchType === 'contains') {
+      if (text.includes(pattern.pattern)) {
+        // For contains match, try to extract a URL from the text
+        const urlMatch = text.match(/https?:\/\/[^\s<>"]+/);
+        return urlMatch ? urlMatch[0] : text;
+      }
+    } else if (pattern.matchType === 'regex') {
+      const regex = new RegExp(pattern.pattern);
+      const match = text.match(regex);
+      if (match) {
+        return match[0];
+      }
+    }
+  } catch {
+    // Skip invalid regex patterns
+    console.warn(`Invalid regex pattern: ${pattern.pattern}`);
+  }
+
+  return null;
 }
 
 function applyRecurrenceDateAndTimezone(originalDate: Date, currentDate: Date, tzid: string): Date {
