@@ -5,7 +5,7 @@ import { WINDOWS_TO_IANA_TIMEZONES } from './generated/windowsTimezones';
 
 import { CallUrlPattern } from './settings/ICSSettings';
 
-export function extractMeetingInfo(e: any, patterns?: CallUrlPattern[]): { callUrl: string, callType: string } {
+export function extractMeetingInfo(e: any, patterns?: CallUrlPattern[]): { callUrl: string | null, callType: string | null } {
   // If patterns not provided or empty, return null (extraction disabled)
   if (!patterns || patterns.length === 0) {
     return { callUrl: null, callType: null };
@@ -24,7 +24,7 @@ export function extractMeetingInfo(e: any, patterns?: CallUrlPattern[]): { callU
   return { callUrl: null, callType: null };
 }
 
-function checkPattern(e: any, pattern: CallUrlPattern): { callUrl: string, callType: string } {
+function checkPattern(e: any, pattern: CallUrlPattern): { callUrl: string | null, callType: string | null } {
   // Special handling for Google Meet conference data
   if (pattern.pattern === "GOOGLE-CONFERENCE" && e["GOOGLE-CONFERENCE"]) {
     return { callUrl: e["GOOGLE-CONFERENCE"], callType: pattern.name };
