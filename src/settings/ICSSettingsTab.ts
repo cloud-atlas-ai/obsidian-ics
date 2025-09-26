@@ -90,12 +90,12 @@ export default class ICSSettingsTab extends PluginSettingTab {
 
     // Add field section management
     new Setting(patternsContainer)
-      .setName("Create Field Section")
-      .setDesc("Create a new field section to group related patterns")
+      .setName("Add new")
+      .setDesc("Add a new field section")
       .addButton((button: ButtonComponent): ButtonComponent => {
-        return button
-          .setTooltip("Create Field Section")
-          .setButtonText("+ Field Section")
+        const b = button
+          .setTooltip("Add Additional")
+          .setButtonText("+")
           .onClick(async () => {
             const modal = new FieldSectionModal(this.app, this.plugin);
             modal.onClose = async () => {
@@ -106,24 +106,8 @@ export default class ICSSettingsTab extends PluginSettingTab {
             };
             modal.open();
           });
-      });
 
-    // Reset to defaults button
-    new Setting(patternsContainer)
-      .setName("Reset to Defaults")
-      .setDesc("Reset all patterns to default video call providers")
-      .addButton((button: ButtonComponent): ButtonComponent => {
-        return button
-          .setButtonText("Reset")
-          .setWarning()
-          .onClick(async () => {
-            const confirmed = confirm("Are you sure you want to reset all field extraction patterns to defaults? This will delete all your custom patterns and cannot be undone.");
-            if (confirmed) {
-              this.plugin.data.fieldExtraction.patterns = [...DEFAULT_FIELD_EXTRACTION_PATTERNS];
-              await this.plugin.saveSettings();
-              this.display();
-            }
-          });
+        return b;
       });
 
     // Group patterns by field name and display them as manageable sections
@@ -143,8 +127,8 @@ export default class ICSSettingsTab extends PluginSettingTab {
     for (const [fieldName, fieldPatterns] of groupedPatterns) {
       // Field section header with management buttons
       const fieldHeader = new Setting(patternsContainer)
-        .setHeading()
         .setName(`${fieldName} (${fieldPatterns.length} pattern${fieldPatterns.length === 1 ? '' : 's'})`)
+        .setClass('field-section-header')
         .addExtraButton((b) => {
           b.setIcon("plus")
             .setTooltip("Add Pattern to this Field")
@@ -268,6 +252,26 @@ export default class ICSSettingsTab extends PluginSettingTab {
           });
       });
     }
+  }
+
+  private displayFieldExtractionReset(containerEl: HTMLElement) {
+    // Reset to defaults button - positioned outside patterns to show it affects all patterns
+    new Setting(containerEl)
+      .setName("Reset to Defaults")
+      .setDesc("Reset all field extraction patterns to default video call providers")
+      .addButton((button: ButtonComponent): ButtonComponent => {
+        return button
+          .setButtonText("Reset All")
+          .setWarning()
+          .onClick(async () => {
+            const confirmed = confirm("Are you sure you want to reset all field extraction patterns to defaults? This will delete all your custom patterns and cannot be undone.");
+            if (confirmed) {
+              this.plugin.data.fieldExtraction.patterns = [...DEFAULT_FIELD_EXTRACTION_PATTERNS];
+              await this.plugin.saveSettings();
+              this.display();
+            }
+          });
+      });
   }
 
   private dataViewSyntaxDescription(): DocumentFragment {
@@ -463,6 +467,10 @@ export default class ICSSettingsTab extends PluginSettingTab {
       containerEl.createDiv().style.marginBottom = '20px';
 
       this.displayFieldExtractionPatterns(containerEl);
+
+      // Add visual separation and reset button
+      containerEl.createDiv().style.marginTop = '20px';
+      this.displayFieldExtractionReset(containerEl);
     }
   }
 
@@ -807,7 +815,7 @@ class FieldExtractionPatternModal extends Modal {
         pattern: "",
         matchType: "contains",
         priority: maxPriority + 1,
-        extractedFieldName: defaultFieldName || "Video Call URL"
+        extractedFieldName: defaultFieldName || "Video Call URLs"
       };
     }
   }
@@ -817,6 +825,14 @@ class FieldExtractionPatternModal extends Modal {
     contentEl.empty();
 
     const settingDiv = contentEl.createDiv({ cls: 'video-call-pattern-settings' });
+
+    // Add Esc key handling to close modal
+    contentEl.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        this.close();
+      }
+    });
 
     // Pattern name
     let nameText: TextComponent;
@@ -874,6 +890,16 @@ class FieldExtractionPatternModal extends Modal {
             this.hasChanges = true;
           }
         });
+        priorityText.inputEl.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            if (this.validateForm()) {
+              this.saved = true;
+              this.hasChanges = false;
+              this.close();
+            }
+          }
+        });
       });
 
     // Footer buttons
@@ -919,9 +945,6 @@ class FieldExtractionPatternModal extends Modal {
 
   private validateForm(): boolean {
     if (!this.pattern.name.trim()) {
-      return false;
-    }
-    if (!this.pattern.extractedFieldName.trim()) {
       return false;
     }
     if (!this.pattern.pattern.trim()) {
@@ -974,6 +997,14 @@ class FieldSectionModal extends Modal {
   display() {
     const { contentEl } = this;
     contentEl.empty();
+
+    // Add Esc key handling to close modal
+    contentEl.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        this.close();
+      }
+    });
 
     // Modal title at the top
     const titleEl = contentEl.createEl('h3', { cls: 'modal-title' });

@@ -5,7 +5,23 @@ padding-top: 2em;
 }
 
 
-/* Field extraction pattern grouping */
+/* Field section headers - smaller than main headings */
+.field-extraction-patterns .field-section-header {
+	margin-top: 16px;
+	margin-bottom: 8px;
+}
+
+.field-extraction-patterns .field-section-header:first-child {
+	margin-top: 8px;
+}
+
+.field-extraction-patterns .field-section-header .setting-item-name {
+	color: var(--text-accent);
+	font-weight: var(--font-medium);
+	font-size: var(--font-ui-medium);
+}
+
+/* Legacy field extraction pattern grouping (keeping for compatibility) */
 .field-extraction-patterns .setting-item.mod-heading {
 	margin-top: 20px;
 	margin-bottom: 8px;
