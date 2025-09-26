@@ -59,8 +59,6 @@ This plugin is in the community plugin browser in Obsidian. Search for ICS and y
 
 The plugin can extract custom fields from calendar events using configurable patterns. This powerful feature allows you to extract any text data and organize it into named fields.
 
-> **✨ New in this version**: This expands the previous video call URL extraction feature into a fully generic system. Your existing templates using `callUrl` and `callType` continue to work unchanged, but you now have access to much more powerful extraction capabilities through `extractedFields`.
-
 #### How It Works
 
 - **Flexible Patterns**: Use simple text matching or regular expressions
