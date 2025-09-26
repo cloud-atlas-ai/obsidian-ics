@@ -7,7 +7,7 @@ import {
   Calendar,
   ICSSettings,
   DEFAULT_SETTINGS,
-  DEFAULT_VIDEO_CALL_PATTERNS,
+  DEFAULT_FIELD_EXTRACTION_PATTERNS,
 } from "./settings/ICSSettings";
 
 import ICSSettingsTab from "./settings/ICSSettingsTab";
@@ -20,7 +20,7 @@ import {
   Plugin,
   request
 } from 'obsidian';
-import { parseIcs, filterMatchingEvents, extractMeetingInfo } from './icalUtils';
+import { parseIcs, filterMatchingEvents, extractFields } from './icalUtils';
 import { IEvent } from './IEvent';
 import { DateNormalizer, FlexibleDateInput } from './DateNormalizer';
 
@@ -136,8 +136,17 @@ export default class ICSPlugin extends Plugin {
 
       try {
         dateEvents.forEach((e) => {
-          const patterns = this.data.videoCallExtraction?.enabled ? this.data.videoCallExtraction.patterns : [];
-          const { callUrl, callType } = extractMeetingInfo(e, patterns);
+          const patterns = this.data.fieldExtraction?.enabled ? this.data.fieldExtraction.patterns : [];
+          const extractedFields = extractFields(e, patterns);
+
+          // Backward compatibility: extract first Video Call URL and type
+          // Support both old singular and new plural field names
+          const videoCallUrls = extractedFields['Video Call URLs'] || extractedFields['Video Call URL'] || [];
+          const callUrl = videoCallUrls.length > 0 ? videoCallUrls[0] : null;
+
+          // For callType, we could derive it from the pattern name, but since we're going generic,
+          // let's just use "Video Call" as a generic type when we have a URL
+          const callType = callUrl ? "Video Call" : null;
 
           const event: IEvent = {
             utime: moment(e.start).format('X'),
@@ -154,6 +163,7 @@ export default class ICSPlugin extends Plugin {
             location: e.location ? e.location : null,
             callUrl: callUrl,
             callType: callType,
+            extractedFields: extractedFields,
             eventType: e.eventType,
             organizer: { email: e.organizer?.val?.substring(7) || null, name: e.organizer?.params?.CN || null },
             attendees: e.attendee ? (Array.isArray(e.attendee) ? e.attendee : [e.attendee]).map(attendee => ({
@@ -262,25 +272,37 @@ export default class ICSPlugin extends Plugin {
   async loadSettings() {
     this.data = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
 
-    // Migration: ensure videoCallExtraction settings exist and are hydrated
+    // Migration: migrate from old videoCallExtraction to new fieldExtraction
     let needsSave = false;
 
-    if (!this.data.videoCallExtraction) {
-      this.data.videoCallExtraction = {
+    // If old videoCallExtraction exists, migrate it to fieldExtraction
+    if ((this.data as any).videoCallExtraction) {
+      const oldSettings = (this.data as any).videoCallExtraction;
+      this.data.fieldExtraction = {
+        enabled: oldSettings.enabled !== false,
+        patterns: DEFAULT_FIELD_EXTRACTION_PATTERNS
+      };
+      delete (this.data as any).videoCallExtraction;
+      needsSave = true;
+    }
+
+    // Ensure fieldExtraction settings exist and are hydrated
+    if (!this.data.fieldExtraction) {
+      this.data.fieldExtraction = {
         enabled: true,
-        patterns: [...DEFAULT_VIDEO_CALL_PATTERNS]
+        patterns: [...DEFAULT_FIELD_EXTRACTION_PATTERNS]
       };
       needsSave = true;
     } else {
       // Ensure patterns array exists
-      if (!this.data.videoCallExtraction.patterns) {
-        this.data.videoCallExtraction.patterns = [...DEFAULT_VIDEO_CALL_PATTERNS];
+      if (!this.data.fieldExtraction.patterns) {
+        this.data.fieldExtraction.patterns = [...DEFAULT_FIELD_EXTRACTION_PATTERNS];
         needsSave = true;
       }
 
-      // Ensure enabled field exists (global setting)
-      if (this.data.videoCallExtraction.enabled === undefined) {
-        this.data.videoCallExtraction.enabled = true;
+      // Ensure enabled field exists
+      if (this.data.fieldExtraction.enabled === undefined) {
+        this.data.fieldExtraction.enabled = true;
         needsSave = true;
       }
     }

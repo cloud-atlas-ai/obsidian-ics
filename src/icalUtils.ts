@@ -3,65 +3,83 @@ import { tz } from 'moment-timezone';
 import { moment } from "obsidian";
 import { WINDOWS_TO_IANA_TIMEZONES } from './generated/windowsTimezones';
 
-import { CallUrlPattern } from './settings/ICSSettings';
+import { FieldExtractionPattern } from './settings/ICSSettings';
 
-export function extractMeetingInfo(e: any, patterns?: CallUrlPattern[]): { callUrl: string | null, callType: string | null } {
-  // If patterns not provided or empty, return null (extraction disabled)
+export function extractFields(e: any, patterns?: FieldExtractionPattern[]): Record<string, string[]> {
+  // If patterns not provided or empty, return empty object
   if (!patterns || patterns.length === 0) {
-    return { callUrl: null, callType: null };
+    return {};
   }
+
+  const extractedFields: Record<string, string[]> = {};
 
   // Sort patterns by priority (lower numbers = higher priority)
   const sortedPatterns = patterns.sort((a, b) => a.priority - b.priority);
 
   for (const pattern of sortedPatterns) {
-    const result = checkPattern(e, pattern);
-    if (result.callUrl) {
-      return result;
+    const matches = findPatternMatches(e, pattern);
+    if (matches.length > 0) {
+      const fieldName = pattern.extractedFieldName;
+      if (!extractedFields[fieldName]) {
+        extractedFields[fieldName] = [];
+      }
+      extractedFields[fieldName].push(...matches);
     }
   }
 
-  return { callUrl: null, callType: null };
+  // Deduplicate all extracted fields
+  for (const fieldName in extractedFields) {
+    extractedFields[fieldName] = [...new Set(extractedFields[fieldName])];
+  }
+
+  return extractedFields;
 }
 
-function checkPattern(e: any, pattern: CallUrlPattern): { callUrl: string | null, callType: string | null } {
+function findPatternMatches(e: any, pattern: FieldExtractionPattern): string[] {
+  const matches: string[] = [];
+
   // Special handling for Google Meet conference data
   if (pattern.pattern === "GOOGLE-CONFERENCE" && e["GOOGLE-CONFERENCE"]) {
-    return { callUrl: e["GOOGLE-CONFERENCE"], callType: pattern.name };
+    matches.push(e["GOOGLE-CONFERENCE"]);
+    return matches;
   }
 
   // Check location field
   if (e.location) {
-    const match = matchText(e.location, pattern);
-    if (match) {
-      return { callUrl: match, callType: pattern.name };
-    }
+    const locationMatches = matchTextForPattern(e.location, pattern);
+    matches.push(...locationMatches);
   }
 
   // Check description field
   if (e.description) {
-    const match = matchText(e.description, pattern);
-    if (match) {
-      return { callUrl: match, callType: pattern.name };
-    }
+    const descriptionMatches = matchTextForPattern(e.description, pattern);
+    matches.push(...descriptionMatches);
   }
 
-  return { callUrl: null, callType: null };
+  return matches;
 }
 
-function matchText(text: string, pattern: CallUrlPattern): string | null {
+function matchTextForPattern(text: string, pattern: FieldExtractionPattern): string[] {
+  const matches: string[] = [];
+
   try {
     if (pattern.matchType === 'contains') {
       if (text.includes(pattern.pattern)) {
-        // For contains match, try to extract a URL from the text
-        const urlMatch = text.match(/https?:\/\/[^\s<>"]+/);
-        return urlMatch ? urlMatch[0] : text;
+        // For contains match, try to extract URLs from the text
+        const urlMatches = text.match(/https?:\/\/[^\s<>"]+/g);
+        if (urlMatches) {
+          matches.push(...urlMatches);
+        } else {
+          // If no URLs found, return the original text
+          matches.push(text);
+        }
       }
     } else if (pattern.matchType === 'regex') {
-      const regex = new RegExp(pattern.pattern);
-      const match = text.match(regex);
-      if (match) {
-        return match[0];
+      const regex = new RegExp(pattern.pattern, 'g'); // Use global flag to find all matches
+      let match;
+      while ((match = regex.exec(text)) !== null) {
+        // If regex has capture groups, use the first group, otherwise use full match
+        matches.push(match[1] || match[0]);
       }
     }
   } catch {
@@ -69,8 +87,9 @@ function matchText(text: string, pattern: CallUrlPattern): string | null {
     console.warn(`Invalid regex pattern: ${pattern.pattern}`);
   }
 
-  return null;
+  return matches;
 }
+
 
 function applyRecurrenceDateAndTimezone(originalDate: Date, currentDate: Date, tzid: string): Date {
   const originalMoment = tz(originalDate, tzid);

@@ -13,8 +13,9 @@ export interface IEvent {
 	description: string; // Detailed description of the event
 	format: Calendar["format"]; // Format preference for the event
 	location: string; // Physical location where the event takes place, if applicable
-	callUrl: string; // URL for joining online meetings/calls associated with the event
-	callType: string; // Type of online meeting (e.g., Zoom, Skype, etc.)
+	callUrl: string; // URL for joining online meetings/calls associated with the event (backward compatibility)
+	callType: string; // Type of online meeting (e.g., Zoom, Skype, etc.) (backward compatibility)
+	extractedFields: Record<string, string[]>; // Generic field extraction results
 	organizer: IOrganizer; // Email of the organizer of the event
   attendees: IAttendee[]; // Array of attendees
   eventType: string; // Type of event (e.g., one-off, recurring, recurring override)

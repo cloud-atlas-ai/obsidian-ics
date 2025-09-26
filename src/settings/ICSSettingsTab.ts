@@ -12,8 +12,8 @@ import {
 import {
   Calendar,
   DEFAULT_CALENDAR_FORMAT,
-  CallUrlPattern,
-  DEFAULT_VIDEO_CALL_PATTERNS
+  FieldExtractionPattern,
+  DEFAULT_FIELD_EXTRACTION_PATTERNS
 } from "./ICSSettings";
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 import moment = require("moment");
@@ -71,37 +71,36 @@ export default class ICSSettingsTab extends PluginSettingTab {
     this.timeFormatExample.innerText = moment(new Date()).format(this.plugin.data.format.timeFormat);
   }
 
-  private displayVideoCallPatterns(containerEl: HTMLElement) {
-    const patternsContainer = containerEl.createDiv("video-call-patterns");
+  private displayFieldExtractionPatterns(containerEl: HTMLElement) {
+    const patternsContainer = containerEl.createDiv("field-extraction-patterns");
 
     // Ensure patterns exist, use defaults if not
-    if (!this.plugin.data.videoCallExtraction?.patterns) {
-      if (!this.plugin.data.videoCallExtraction) {
-        this.plugin.data.videoCallExtraction = {
+    if (!this.plugin.data.fieldExtraction?.patterns) {
+      if (!this.plugin.data.fieldExtraction) {
+        this.plugin.data.fieldExtraction = {
           enabled: true,
-          patterns: DEFAULT_VIDEO_CALL_PATTERNS
+          patterns: DEFAULT_FIELD_EXTRACTION_PATTERNS
         };
       } else {
-        this.plugin.data.videoCallExtraction.patterns = DEFAULT_VIDEO_CALL_PATTERNS;
+        this.plugin.data.fieldExtraction.patterns = DEFAULT_FIELD_EXTRACTION_PATTERNS;
       }
     }
 
-    const patterns = this.plugin.data.videoCallExtraction.patterns;
+    const patterns = this.plugin.data.fieldExtraction.patterns;
 
-    // Add new pattern button
+    // Add field section management
     new Setting(patternsContainer)
-      .setName("Add URL Pattern")
-      .setDesc("Add a new pattern to extract video call URLs")
+      .setName("Create Field Section")
+      .setDesc("Create a new field section to group related patterns")
       .addButton((button: ButtonComponent): ButtonComponent => {
         return button
-          .setTooltip("Add Pattern")
-          .setButtonText("+")
+          .setTooltip("Create Field Section")
+          .setButtonText("+ Field Section")
           .onClick(async () => {
-            const modal = new VideoCallPatternModal(this.app, this.plugin);
+            const modal = new FieldSectionModal(this.app, this.plugin);
             modal.onClose = async () => {
               if (modal.saved) {
-                patterns.push(modal.pattern);
-                await this.plugin.saveSettings();
+                // Refresh display to show new section
                 this.display();
               }
             };
@@ -118,32 +117,62 @@ export default class ICSSettingsTab extends PluginSettingTab {
           .setButtonText("Reset")
           .setWarning()
           .onClick(async () => {
-            this.plugin.data.videoCallExtraction.patterns = [...DEFAULT_VIDEO_CALL_PATTERNS];
-            await this.plugin.saveSettings();
-            this.display();
+            const confirmed = confirm("Are you sure you want to reset all field extraction patterns to defaults? This will delete all your custom patterns and cannot be undone.");
+            if (confirmed) {
+              this.plugin.data.fieldExtraction.patterns = [...DEFAULT_FIELD_EXTRACTION_PATTERNS];
+              await this.plugin.saveSettings();
+              this.display();
+            }
           });
       });
 
-    // Display existing patterns sorted by priority
+    // Group patterns by field name and display them as manageable sections
     const sortedPatterns = [...patterns].sort((a, b) => a.priority - b.priority);
-    sortedPatterns.forEach((pattern, index) => {
-      const setting = new Setting(patternsContainer);
+    const groupedPatterns = new Map<string, FieldExtractionPattern[]>();
 
-      setting.setName(pattern.name)
-        .setDesc(`${pattern.matchType === 'regex' ? 'Regex' : 'Contains'}: ${pattern.pattern} (Priority: ${pattern.priority})`)
+    // Group patterns by extracted field name
+    sortedPatterns.forEach(pattern => {
+      const fieldName = pattern.extractedFieldName;
+      if (!groupedPatterns.has(fieldName)) {
+        groupedPatterns.set(fieldName, []);
+      }
+      groupedPatterns.get(fieldName)!.push(pattern);
+    });
+
+    // Display each field section
+    for (const [fieldName, fieldPatterns] of groupedPatterns) {
+      // Field section header with management buttons
+      const fieldHeader = new Setting(patternsContainer)
+        .setHeading()
+        .setName(`${fieldName} (${fieldPatterns.length} pattern${fieldPatterns.length === 1 ? '' : 's'})`)
         .addExtraButton((b) => {
-          b.setIcon("pencil")
-            .setTooltip("Edit")
-            .onClick(() => {
-              const modal = new VideoCallPatternModal(this.app, this.plugin, pattern);
+          b.setIcon("plus")
+            .setTooltip("Add Pattern to this Field")
+            .onClick(async () => {
+              const modal = new FieldExtractionPatternModal(this.app, this.plugin, undefined, fieldName);
               modal.onClose = async () => {
                 if (modal.saved) {
-                  const originalIndex = patterns.findIndex(p => p === pattern);
-                  if (originalIndex !== -1) {
-                    patterns[originalIndex] = modal.pattern;
-                    await this.plugin.saveSettings();
-                    this.display();
-                  }
+                  patterns.push(modal.pattern);
+                  await this.plugin.saveSettings();
+                  this.display();
+                }
+              };
+              modal.open();
+            });
+        })
+        .addExtraButton((b) => {
+          b.setIcon("pencil")
+            .setTooltip("Edit Field Name")
+            .onClick(async () => {
+              const modal = new FieldSectionModal(this.app, this.plugin, fieldName);
+              modal.onClose = async () => {
+                if (modal.saved && modal.fieldName !== fieldName) {
+                  // Update all patterns in this field to use the new field name
+                  fieldPatterns.forEach(pattern => {
+                    pattern.extractedFieldName = modal.fieldName;
+                  });
+                  await this.plugin.saveSettings();
+                  this.display();
                 }
               };
               modal.open();
@@ -151,17 +180,94 @@ export default class ICSSettingsTab extends PluginSettingTab {
         })
         .addExtraButton((b) => {
           b.setIcon("trash")
-            .setTooltip("Delete")
+            .setTooltip("Delete Field Section")
             .onClick(async () => {
-              const patternIndex = patterns.findIndex(p => p === pattern);
-              if (patternIndex !== -1) {
-                patterns.splice(patternIndex, 1);
+              const confirmed = confirm(`Are you sure you want to delete the "${fieldName}" field section? This will remove all ${fieldPatterns.length} pattern(s) in this section.`);
+              if (confirmed) {
+                // Remove all patterns in this field section
+                fieldPatterns.forEach(pattern => {
+                  const patternIndex = patterns.findIndex(p => p === pattern);
+                  if (patternIndex !== -1) {
+                    patterns.splice(patternIndex, 1);
+                  }
+                });
                 await this.plugin.saveSettings();
                 this.display();
               }
             });
         });
-    });
+
+      // Display patterns in this field section
+      fieldPatterns.forEach((pattern, fieldIndex) => {
+        const globalIndex = sortedPatterns.findIndex(p => p === pattern);
+        const setting = new Setting(patternsContainer);
+
+        setting.setName(pattern.name)
+          .setDesc(`${pattern.matchType === 'regex' ? 'Regex' : 'Contains'}: ${pattern.pattern} (Priority: ${pattern.priority})`)
+          .addExtraButton((b) => {
+            b.setIcon("chevron-up")
+              .setTooltip("Move Up (Higher Priority)")
+              .setDisabled(globalIndex === 0)
+              .onClick(async () => {
+                if (globalIndex > 0) {
+                  // Swap priorities with the previous pattern in global order
+                  const prevPattern = sortedPatterns[globalIndex - 1];
+                  const currentPriority = pattern.priority;
+                  pattern.priority = prevPattern.priority;
+                  prevPattern.priority = currentPriority;
+                  await this.plugin.saveSettings();
+                  this.display();
+                }
+              });
+          })
+          .addExtraButton((b) => {
+            b.setIcon("chevron-down")
+              .setTooltip("Move Down (Lower Priority)")
+              .setDisabled(globalIndex === sortedPatterns.length - 1)
+              .onClick(async () => {
+                if (globalIndex < sortedPatterns.length - 1) {
+                  // Swap priorities with the next pattern in global order
+                  const nextPattern = sortedPatterns[globalIndex + 1];
+                  const currentPriority = pattern.priority;
+                  pattern.priority = nextPattern.priority;
+                  nextPattern.priority = currentPriority;
+                  await this.plugin.saveSettings();
+                  this.display();
+                }
+              });
+          })
+          .addExtraButton((b) => {
+            b.setIcon("pencil")
+              .setTooltip("Edit")
+              .onClick(() => {
+                const modal = new FieldExtractionPatternModal(this.app, this.plugin, pattern);
+                modal.onClose = async () => {
+                  if (modal.saved) {
+                    const originalIndex = patterns.findIndex(p => p === pattern);
+                    if (originalIndex !== -1) {
+                      patterns[originalIndex] = modal.pattern;
+                      await this.plugin.saveSettings();
+                      this.display();
+                    }
+                  }
+                };
+                modal.open();
+              });
+          })
+          .addExtraButton((b) => {
+            b.setIcon("trash")
+              .setTooltip("Delete")
+              .onClick(async () => {
+                const patternIndex = patterns.findIndex(p => p === pattern);
+                if (patternIndex !== -1) {
+                  patterns.splice(patternIndex, 1);
+                  await this.plugin.saveSettings();
+                  this.display();
+                }
+              });
+          });
+      });
+    }
   }
 
   private dataViewSyntaxDescription(): DocumentFragment {
@@ -177,13 +283,32 @@ export default class ICSSettingsTab extends PluginSettingTab {
 
     containerEl.empty();
 
+    // Calendars Section
+    this.displayCalendarsSection(containerEl);
+
+    // Output Format Section
+    this.displayFormatSection(containerEl);
+
+    // Field Extraction Section
+    this.displayFieldExtractionSection(containerEl);
+
+    // Sponsor link - Thank you!
+    const divSponsor = containerEl.createDiv();
+    divSponsor.innerHTML = `<br/><hr/>A scratch my own itch project by <a href="https://muness.com/" target='_blank'>muness</a>.<br/>
+			<a href='https://www.buymeacoffee.com/muness' target='_blank'><img height="36" src='https://cdn.buymeacoffee.com/uploads/profile_pictures/default/79D6B5/MC.png' border='0' alt='Buy Me a Book' /></a>
+		`
+  }
+
+
+  private displayCalendarsSection(containerEl: HTMLElement): void {
+    // Section heading
+    new Setting(containerEl)
+      .setHeading()
+      .setName("Calendars");
+
     const calendarContainer = containerEl.createDiv(
       "ics-setting-calendar"
     );
-
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const calnedarSetting = new Setting(calendarContainer)
-      .setHeading().setName("Calendars");
 
     new Setting(calendarContainer)
       .setName("Add new")
@@ -258,11 +383,13 @@ export default class ICSSettingsTab extends PluginSettingTab {
             });
         });
     }
+  }
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const formatSetting = new Setting(containerEl)
-      .setHeading().setName("Output Format");
-
+  private displayFormatSection(containerEl: HTMLElement): void {
+    // Section heading
+    new Setting(containerEl)
+      .setHeading()
+      .setName("Output Format");
 
     let timeFormat: TextComponent;
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -288,42 +415,55 @@ export default class ICSSettingsTab extends PluginSettingTab {
           this.plugin.data.format.dataViewSyntax = v;
           await this.plugin.saveSettings();
         }));
+  }
 
-    // Video Call URL Extraction Settings
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const videoCallSetting = new Setting(containerEl)
-      .setHeading().setName("Video Call URL Extraction");
+  private displayFieldExtractionSection(containerEl: HTMLElement): void {
+    // Section heading
+    new Setting(containerEl)
+      .setHeading()
+      .setName("Field Extraction");
 
     // Enable/disable toggle
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const videoCallEnabledSetting = new Setting(containerEl)
-      .setName('Enable Video Call URL Extraction')
-      .setDesc('Extract video call URLs from calendar events')
+    const fieldExtractionEnabledSetting = new Setting(containerEl)
+      .setName('Enable Field Extraction')
+      .setDesc('Extract custom fields from calendar events using patterns')
       .addToggle(toggle => toggle
-        .setValue(this.plugin.data.videoCallExtraction?.enabled ?? true)
+        .setValue(this.plugin.data.fieldExtraction?.enabled ?? true)
         .onChange(async (v) => {
-          if (!this.plugin.data.videoCallExtraction) {
-            this.plugin.data.videoCallExtraction = {
+          if (!this.plugin.data.fieldExtraction) {
+            this.plugin.data.fieldExtraction = {
               enabled: v,
-              patterns: DEFAULT_VIDEO_CALL_PATTERNS
+              patterns: DEFAULT_FIELD_EXTRACTION_PATTERNS
             };
           } else {
-            this.plugin.data.videoCallExtraction.enabled = v;
+            this.plugin.data.fieldExtraction.enabled = v;
           }
           await this.plugin.saveSettings();
           this.display(); // Refresh to show/hide patterns section
         }));
 
-    // Only show patterns section if enabled
-    if (this.plugin.data.videoCallExtraction?.enabled !== false) {
-      this.displayVideoCallPatterns(containerEl);
-    }
+    // Only show patterns section and related UI if enabled
+    if (this.plugin.data.fieldExtraction?.enabled !== false) {
+      // Add Templater example button
+      new Setting(containerEl)
+        .setName("Templater Example")
+        .setDesc("Show example code for using extracted fields with Templater")
+        .addButton((button: ButtonComponent): ButtonComponent => {
+          return button
+            .setButtonText("Show Example")
+            .setIcon("code")
+            .onClick(() => {
+              const modal = new TemplaterExampleModal(this.app, this.plugin);
+              modal.open();
+            });
+        });
 
-    // Sponsor link - Thank you!
-    const divSponsor = containerEl.createDiv();
-    divSponsor.innerHTML = `<br/><hr/>A scratch my own itch project by <a href="https://muness.com/" target='_blank'>muness</a>.<br/>
-			<a href='https://www.buymeacoffee.com/muness' target='_blank'><img height="36" src='https://cdn.buymeacoffee.com/uploads/profile_pictures/default/79D6B5/MC.png' border='0' alt='Buy Me a Book' /></a>
-		`
+      // Add some whitespace below the usage area
+      containerEl.createDiv().style.marginBottom = '20px';
+
+      this.displayFieldExtractionPatterns(containerEl);
+    }
   }
 
 }
@@ -646,13 +786,13 @@ class SettingsModal extends Modal {
   }
 }
 
-class VideoCallPatternModal extends Modal {
+class FieldExtractionPatternModal extends Modal {
   plugin: ICSPlugin;
-  pattern: CallUrlPattern;
+  pattern: FieldExtractionPattern;
   saved: boolean = false;
   private hasChanges: boolean = false;
 
-  constructor(app: App, plugin: ICSPlugin, pattern?: CallUrlPattern) {
+  constructor(app: App, plugin: ICSPlugin, pattern?: FieldExtractionPattern, defaultFieldName?: string) {
     super(app);
     this.plugin = plugin;
 
@@ -661,12 +801,13 @@ class VideoCallPatternModal extends Modal {
       this.pattern = { ...pattern };
     } else {
       // Creating new pattern
-      const maxPriority = Math.max(...(this.plugin.data.videoCallExtraction?.patterns.map(p => p.priority) || [0]));
+      const maxPriority = Math.max(...(this.plugin.data.fieldExtraction?.patterns.map(p => p.priority) || [0]));
       this.pattern = {
         name: "",
         pattern: "",
         matchType: "contains",
-        priority: maxPriority + 1
+        priority: maxPriority + 1,
+        extractedFieldName: defaultFieldName || "Video Call URL"
       };
     }
   }
@@ -689,6 +830,7 @@ class VideoCallPatternModal extends Modal {
           this.hasChanges = true;
         });
       });
+
 
     // Match type
     new Setting(settingDiv)
@@ -779,6 +921,9 @@ class VideoCallPatternModal extends Modal {
     if (!this.pattern.name.trim()) {
       return false;
     }
+    if (!this.pattern.extractedFieldName.trim()) {
+      return false;
+    }
     if (!this.pattern.pattern.trim()) {
       return false;
     }
@@ -804,5 +949,244 @@ class VideoCallPatternModal extends Modal {
       }
     }
     super.close();
+  }
+}
+
+class FieldSectionModal extends Modal {
+  plugin: ICSPlugin;
+  fieldName: string = "";
+  saved: boolean = false;
+  private hasChanges: boolean = false;
+  private isEditing: boolean = false;
+  private originalFieldName: string = "";
+
+  constructor(app: App, plugin: ICSPlugin, existingFieldName?: string) {
+    super(app);
+    this.plugin = plugin;
+
+    if (existingFieldName) {
+      this.isEditing = true;
+      this.fieldName = existingFieldName;
+      this.originalFieldName = existingFieldName;
+    }
+  }
+
+  display() {
+    const { contentEl } = this;
+    contentEl.empty();
+
+    // Modal title at the top
+    const titleEl = contentEl.createEl('h3', { cls: 'modal-title' });
+    titleEl.textContent = this.isEditing ? 'Edit Field Section' : 'Create Field Section';
+
+    const settingDiv = contentEl.createDiv({ cls: 'field-section-settings' });
+
+    // Field name input
+    let fieldNameText: TextComponent;
+    new Setting(settingDiv)
+      .setName("Field Name")
+      .setDesc(this.isEditing
+        ? `Rename this field section. All patterns will be updated to use the new name.`
+        : "Name for the field section (e.g., 'Phone Numbers', 'Meeting IDs', 'Video Call URLs').")
+      .addText((text) => {
+        fieldNameText = text;
+        fieldNameText.setValue(this.fieldName).onChange((v) => {
+          this.fieldName = v;
+          this.hasChanges = true;
+        });
+      });
+
+    // Add backward compatibility tip
+    const tipEl = settingDiv.createDiv('field-name-tip');
+    tipEl.innerHTML = `
+      <p><strong>💡 Backward Compatibility Tip:</strong> The field name "Video Call URLs" automatically populates the legacy <code>callUrl</code> and <code>callType</code> properties for existing templates.</p>
+      <p>For new templates, use <code>event.extractedFields["Field Names"]</code> to access any field's extracted data.</p>
+    `;
+
+    // Footer buttons
+    const footerEl = contentEl.createDiv();
+    const footerButtons = new Setting(footerEl);
+    footerButtons.addButton((b) => {
+      const buttonText = this.isEditing ? "Save Changes" : "Create Section";
+      const buttonIcon = this.isEditing ? "check" : "plus";
+
+      b.setTooltip(buttonText)
+        .setIcon(buttonIcon)
+        .onClick(async () => {
+          if (this.validateForm()) {
+            if (this.isEditing) {
+              // Just save - the calling code will handle updating patterns
+              this.saved = true;
+              this.hasChanges = false;
+              this.close();
+            } else {
+              // Create a default pattern for this field section
+              const maxPriority = Math.max(...(this.plugin.data.fieldExtraction?.patterns.map(p => p.priority) || [0]));
+              const defaultPattern: FieldExtractionPattern = {
+                name: `${this.fieldName} Pattern`,
+                pattern: "",
+                matchType: "contains",
+                priority: maxPriority + 1,
+                extractedFieldName: this.fieldName
+              };
+
+              this.plugin.data.fieldExtraction.patterns.push(defaultPattern);
+              await this.plugin.saveSettings();
+
+              this.saved = true;
+              this.hasChanges = false;
+              this.close();
+            }
+          }
+        });
+      return b;
+    });
+    footerButtons.addExtraButton((b) => {
+      b.setTooltip("Cancel")
+        .setIcon("cross")
+        .onClick(() => {
+          this.saved = false;
+          this.close();
+        });
+      return b;
+    });
+  }
+
+  private validateForm(): boolean {
+    if (!this.fieldName.trim()) {
+      return false;
+    }
+    return true;
+  }
+
+  onOpen() {
+    this.display();
+  }
+
+  close() {
+    if (this.hasChanges) {
+      const confirmDiscard = confirm('You have unsaved changes. Are you sure you want to discard them?');
+      if (!confirmDiscard) {
+        return; // Prevent the modal from closing
+      }
+    }
+    super.close();
+  }
+}
+
+class TemplaterExampleModal extends Modal {
+  plugin: ICSPlugin;
+
+  constructor(app: App, plugin: ICSPlugin) {
+    super(app);
+    this.plugin = plugin;
+  }
+
+  onOpen() {
+    this.display();
+  }
+
+  display() {
+    const { contentEl } = this;
+    contentEl.empty();
+
+    // Modal title
+    const titleEl = contentEl.createEl('h3', { cls: 'modal-title' });
+    titleEl.textContent = 'Templater Example';
+
+    const settingDiv = contentEl.createDiv({ cls: 'field-section-settings' });
+
+    // Get unique field names from patterns
+    const patterns = this.plugin.data.fieldExtraction?.patterns || [];
+    const fieldNames = [...new Set(patterns.map(p => p.extractedFieldName))].filter(Boolean);
+
+    // Generate dynamic Templater code based on user's configured fields
+    const extractedFieldsCode = fieldNames.length > 0
+      ? fieldNames.map(fieldName => `    const ${this.camelCase(fieldName)} = event.extractedFields["${fieldName}"] || [];`).join('\n')
+      : '    // No custom fields configured yet - add field sections to see them here';
+
+    const fieldDisplayCode = fieldNames.length > 0
+      ? fieldNames.map(fieldName => {
+          const camelCased = this.camelCase(fieldName);
+          return `    if (${camelCased}.length > 0) {
+        tR += \`    - ${fieldName}:: \${${camelCased}.join(", ")}\\n\`;
+    }`;
+        }).join('\n')
+      : '    // Field display code will appear here when you add field sections';
+
+    const templaterCode = `<%*
+const events = await app.plugins.getPlugin('ics').getEvents(moment(tp.file.title,"YYYY-MM-DD"));
+events.sort((a, b) => a.utime - b.utime).forEach((event) => {
+    const { time, endTime, summary, icsName, callUrl, callType, location, attendees, description } = event;
+
+    // Extract custom fields
+${extractedFieldsCode}
+
+    // Format attendees
+    const attendeeList = attendees ? attendees.map(attendee => \`[\${attendee.name}](mailto:\${attendee.email})\`).join(", ") : '';
+
+    // Main event line
+    tR += \`- [ ] \${time}-\${endTime} **\${summary}** \${icsName}\\n\`;
+
+    // Add extracted fields as indented metadata
+${fieldDisplayCode}
+
+    // Add attendees if present
+    if (attendeeList) {
+        tR += \`    - Attendees:: \${attendeeList}\\n\`;
+    }
+});
+%>`;
+
+    // Description
+    new Setting(settingDiv)
+      .setName("How to use with Templater")
+      .setDesc(`This example shows how to use extracted fields in your Templater templates. ${fieldNames.length > 0 ? `Based on your current field sections: ${fieldNames.join(', ')}` : 'Add field sections to see them reflected in the code below.'}`);
+
+    // Code display area
+    const codeContainer = settingDiv.createDiv('compatibility-note');
+    const codeEl = codeContainer.createEl('pre');
+    codeEl.style.whiteSpace = 'pre-wrap';
+    codeEl.style.fontFamily = 'var(--font-monospace)';
+    codeEl.style.fontSize = '0.9em';
+    codeEl.style.maxHeight = '400px';
+    codeEl.style.overflow = 'auto';
+    codeEl.textContent = templaterCode;
+
+    // Copy button
+    new Setting(settingDiv)
+      .addButton((button: ButtonComponent): ButtonComponent => {
+        return button
+          .setButtonText("Copy to Clipboard")
+          .setIcon("copy")
+          .onClick(async () => {
+            await navigator.clipboard.writeText(templaterCode);
+            button.setButtonText("Copied!");
+            setTimeout(() => {
+              button.setButtonText("Copy to Clipboard");
+            }, 2000);
+          });
+      });
+
+    // Usage note
+    const usageNote = settingDiv.createDiv('field-name-tip');
+    usageNote.innerHTML = `
+      <p><strong>💡 Usage:</strong> Copy this code into your Templater template file. It will automatically use any field sections you've configured.</p>
+    `;
+
+    // Close button
+    new Setting(settingDiv)
+      .addButton((button: ButtonComponent): ButtonComponent => {
+        return button
+          .setButtonText("Close")
+          .onClick(() => this.close());
+      });
+  }
+
+  private camelCase(str: string): string {
+    return str
+      .replace(/\s+/g, '') // Remove spaces
+      .replace(/[^a-zA-Z0-9]/g, '') // Remove special characters
+      .replace(/^./, c => c.toLowerCase()); // Make first letter lowercase
   }
 }

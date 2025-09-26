@@ -55,38 +55,88 @@ This plugin is in the community plugin browser in Obsidian. Search for ICS and y
 
 ![Settings Screenshot](https://github.com/cloud-atlas-ai/obsidian-ics/blob/master/docs/2023-09-03-settings.png?raw=true)
 
-### Video Call URL Extraction
+### Field Extraction
 
-The plugin automatically extracts video call URLs from calendar events and displays them as clickable links. You can configure which platforms are detected and how URLs are extracted through the "Video Call URL Extraction" settings.
+The plugin can extract custom fields from calendar events using configurable patterns. This powerful feature allows you to extract any text data and organize it into named fields.
 
-#### Default Supported Platforms
+> **✨ New in this version**: This expands the previous video call URL extraction feature into a fully generic system. Your existing templates using `callUrl` and `callType` continue to work unchanged, but you now have access to much more powerful extraction capabilities through `extractedFields`.
 
-- **Google Meet**: Automatically detected from `GOOGLE-CONFERENCE` field
-- **Zoom**: Detects `zoom.us` URLs in location or description
-- **Skype**: Extracts `https://join.skype.com/` URLs using regex
-- **Microsoft Teams**: Extracts Teams meeting URLs using regex
+#### How It Works
 
-#### Custom Patterns
+- **Flexible Patterns**: Use simple text matching or regular expressions
+- **Custom Field Names**: Extract data into any field name you choose
+- **Multiple Matches**: Each field can contain multiple extracted values
+- **Priority-Based**: Patterns are processed in priority order
 
-You can add custom patterns for other video conferencing platforms:
+#### Default Configuration
+
+By default, the plugin extracts video call URLs into the "Video Call URL" field:
+
+- **Google Meet**: Detected from `GOOGLE-CONFERENCE` field
+- **Zoom**: URLs containing `zoom.us`
+- **Skype**: URLs matching `https://join.skype.com/` pattern
+- **Microsoft Teams**: Teams meeting URLs
+
+#### Custom Extraction Examples
+
+You can create patterns to extract any information:
+
+- **Additional Video Calls**: Extend beyond the defaults:
+  - WebEx: `webex.com` → "Video Call URLs" field
+  - GoToMeeting: `gotomeeting.com` → "Video Call URLs" field
+  - Jitsi: `meet.jit.si` → "Video Call URLs" field
+- **Links**: `(https?|ftp|file)://[^\s<>"]+` → "Links" field
+- **Phone Numbers**: Create multiple patterns for the same field:
+  - US format: `\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}` → "Phone Numbers" field
+  - International: `\+\d{1,3}[-.\s]?\d{1,14}` → "Phone Numbers" field
+- **Meeting IDs**: `Meeting ID: (\d+)` → "Meeting IDs" field
+
+#### Pattern Configuration
 
 1. **Pattern Types**:
-   - **Contains**: Simple text matching (e.g., "webex.com" to catch any WebEx URL)
-   - **Regex**: Full regular expression support for precise matching
-2. **Common Use Cases**:
-   - Add `https://` (contains) to extract any HTTP/HTTPS link as a potential video call
-   - Create specific patterns for internal tools or less common platforms
-   - Use regex for complex URL structures
-3. **Pattern Management**:
+   - **Contains**: Simple text matching (e.g., "zoom.us")
+   - **Regex**: Full regular expression support with capture groups
+
+2. **Pattern Management**:
    - Set priority (lower numbers are checked first)
+   - Assign custom field names
    - Delete patterns you don't need
    - Reset to defaults if needed
    - Real-time validation for regex patterns
 
-Example custom patterns:
+#### Accessing Extracted Data
 
-- GoToMeeting: `gotomeeting.com` (contains)
-- WebEx: `https://[\\w-]+\\.webex\\.com/` (regex)
+**Legacy Support (Backward Compatible)**:
+
+- `callUrl` and `callType` continue to work for existing templates
+- These map to the first "Video Call URL" extraction for compatibility
+
+**New Approach (Recommended)**:
+
+- Use `extractedFields["Field Name"]` to access any extracted data
+- Each field returns an array of all matching values
+- Much more flexible and powerful than the legacy fields
+
+**Example**:
+
+```javascript
+// Legacy approach (still works but limited)
+if (event.callUrl) {
+  // Only gets the first video call URL
+}
+
+// New approach (recommended)
+const videoUrls = event.extractedFields["Video Call URLs"] || [];
+const meetingIds = event.extractedFields["Meeting IDs"] || [];
+const phoneNumbers = event.extractedFields["Phone Numbers"] || [];
+
+// Handle multiple values
+videoUrls.forEach(url => {
+  // Process each video call URL
+});
+```
+
+> **💡 Tip**: Consider migrating your templates to use `extractedFields` for more flexibility and to access all extracted data, not just the first match.
 
 ### Usage
 
