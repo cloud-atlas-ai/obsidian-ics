@@ -3,29 +3,93 @@ import { tz } from 'moment-timezone';
 import { moment } from "obsidian";
 import { WINDOWS_TO_IANA_TIMEZONES } from './generated/windowsTimezones';
 
-export function extractMeetingInfo(e: any): { callUrl: string, callType: string } {
+import { FieldExtractionPattern } from './settings/ICSSettings';
 
-  // Check for Google Meet conference data
-  if (e["GOOGLE-CONFERENCE"]) {
-    return { callUrl: e["GOOGLE-CONFERENCE"], callType: 'Google Meet' };
+export function extractFields(e: any, patterns?: FieldExtractionPattern[]): Record<string, string[]> {
+  // If patterns not provided or empty, return empty object
+  if (!patterns || patterns.length === 0) {
+    return {};
   }
-  // Check if the location contains a Zoom link
-  if (e.location && e.location.includes('zoom.us')) {
-    return { callUrl: e.location, callType: 'Zoom' };
-  }
-  if (e.description) {
-    const skypeMatch = e.description.match(/https:\/\/join.skype.com\/[a-zA-Z0-9]+/);
-    if (skypeMatch) {
-      return { callUrl: skypeMatch[0], callType: 'Skype' };
-    }
 
-    const teamsMatch = e.description.match(/(https:\/\/teams\.microsoft\.com\/l\/meetup-join\/[^>]+)/);
-    if (teamsMatch) {
-      return { callUrl: teamsMatch[0], callType: 'Microsoft Teams' };
+  const extractedFields: Record<string, string[]> = {};
+
+  // Sort patterns by priority (lower numbers = higher priority)
+  const sortedPatterns = patterns.sort((a, b) => a.priority - b.priority);
+
+  for (const pattern of sortedPatterns) {
+    const matches = findPatternMatches(e, pattern);
+    if (matches.length > 0) {
+      const fieldName = pattern.extractedFieldName;
+      if (!extractedFields[fieldName]) {
+        extractedFields[fieldName] = [];
+      }
+      extractedFields[fieldName].push(...matches);
     }
   }
-  return { callUrl: null, callType: null };
+
+  // Deduplicate all extracted fields
+  for (const fieldName in extractedFields) {
+    extractedFields[fieldName] = [...new Set(extractedFields[fieldName])];
+  }
+
+  return extractedFields;
 }
+
+function findPatternMatches(e: any, pattern: FieldExtractionPattern): string[] {
+  const matches: string[] = [];
+
+  // Special handling for Google Meet conference data
+  if (pattern.pattern === "GOOGLE-CONFERENCE" && e["GOOGLE-CONFERENCE"]) {
+    matches.push(e["GOOGLE-CONFERENCE"]);
+    return matches;
+  }
+
+  // Check location field
+  if (e.location) {
+    const locationMatches = matchTextForPattern(e.location, pattern);
+    matches.push(...locationMatches);
+  }
+
+  // Check description field
+  if (e.description) {
+    const descriptionMatches = matchTextForPattern(e.description, pattern);
+    matches.push(...descriptionMatches);
+  }
+
+  return matches;
+}
+
+function matchTextForPattern(text: string, pattern: FieldExtractionPattern): string[] {
+  const matches: string[] = [];
+
+  try {
+    if (pattern.matchType === 'contains') {
+      if (text.includes(pattern.pattern)) {
+        // For contains match, try to extract URLs from the text
+        const urlMatches = text.match(/https?:\/\/[^\s<>"]+/g);
+        if (urlMatches) {
+          matches.push(...urlMatches);
+        } else {
+          // If no URLs found, return the original text
+          matches.push(text);
+        }
+      }
+    } else if (pattern.matchType === 'regex') {
+      const regex = new RegExp(pattern.pattern, 'g'); // Use global flag to find all matches
+      let match;
+      while ((match = regex.exec(text)) !== null) {
+        // If regex has capture groups, use the first group, otherwise use full match
+        matches.push(match[1] || match[0]);
+      }
+    }
+  } catch {
+    // Skip invalid regex patterns
+    console.warn(`Invalid regex pattern: ${pattern.pattern}`);
+  }
+
+  return matches;
+}
+
 
 function applyRecurrenceDateAndTimezone(originalDate: Date, currentDate: Date, tzid: string): Date {
   const originalMoment = tz(originalDate, tzid);

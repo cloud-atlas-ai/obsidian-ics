@@ -1,4 +1,5 @@
-import { parseIcs, filterMatchingEvents, extractMeetingInfo } from '../src/icalUtils';
+import { parseIcs, filterMatchingEvents, extractFields } from '../src/icalUtils';
+import { DEFAULT_FIELD_EXTRACTION_PATTERNS } from '../src/settings/ICSSettings';
 import { moment } from 'obsidian';
 
 describe('icalUtils', () => {
@@ -94,55 +95,90 @@ END:VCALENDAR`;
     });
   });
 
-  describe('extractMeetingInfo', () => {
-    it('should extract Google Meet conference data', () => {
+  describe('extractFields', () => {
+    it('should extract Video Call URLs to array', () => {
       const event = {
         'GOOGLE-CONFERENCE': 'https://meet.google.com/abc-defg-hij'
       };
 
-      const { callUrl, callType } = extractMeetingInfo(event);
-      expect(callUrl).toBe('https://meet.google.com/abc-defg-hij');
-      expect(callType).toBe('Google Meet');
+      const extractedFields = extractFields(event, DEFAULT_FIELD_EXTRACTION_PATTERNS);
+      expect(extractedFields['Video Call URLs']).toEqual(['https://meet.google.com/abc-defg-hij']);
     });
 
-    it('should extract Zoom links from location', () => {
+    it('should extract multiple video call URLs', () => {
       const event = {
-        location: 'https://zoom.us/j/123456789'
+        location: 'https://zoom.us/j/123456789',
+        description: 'Backup meeting: https://meet.google.com/backup-link'
       };
 
-      const { callUrl, callType } = extractMeetingInfo(event);
-      expect(callUrl).toBe('https://zoom.us/j/123456789');
-      expect(callType).toBe('Zoom');
+      const patterns = [
+        ...DEFAULT_FIELD_EXTRACTION_PATTERNS,
+        {
+          name: "Google Meet Backup",
+          pattern: "https://meet\\.google\\.com/[a-zA-Z0-9-]+",
+          matchType: "regex" as const,
+          priority: 5,
+          extractedFieldName: "Video Call URLs"
+        }
+      ];
+
+      const extractedFields = extractFields(event, patterns);
+      expect(extractedFields['Video Call URLs']).toContain('https://zoom.us/j/123456789');
+      expect(extractedFields['Video Call URLs']).toContain('https://meet.google.com/backup-link');
+      expect(extractedFields['Video Call URLs']).toHaveLength(2);
     });
 
-    it('should extract Skype links from description', () => {
+    it('should extract different field types', () => {
       const event = {
-        description: 'Join the meeting: https://join.skype.com/abc123def'
+        description: 'Meeting ID: 12345, Phone: +1-555-123-4567, https://zoom.us/j/123456789'
       };
 
-      const { callUrl, callType } = extractMeetingInfo(event);
-      expect(callUrl).toBe('https://join.skype.com/abc123def');
-      expect(callType).toBe('Skype');
+      const patterns = [
+        {
+          name: "Meeting ID",
+          pattern: "Meeting ID: (\\d+)",
+          matchType: "regex" as const,
+          priority: 1,
+          extractedFieldName: "Meeting ID"
+        },
+        {
+          name: "Phone Number",
+          pattern: "\\+1-\\d{3}-\\d{3}-\\d{4}",
+          matchType: "regex" as const,
+          priority: 2,
+          extractedFieldName: "Phone Number"
+        },
+        {
+          name: "Zoom",
+          pattern: "zoom.us",
+          matchType: "contains" as const,
+          priority: 3,
+          extractedFieldName: "Video Call URLs"
+        }
+      ];
+
+      const extractedFields = extractFields(event, patterns);
+      expect(extractedFields['Meeting ID']).toEqual(['12345']);
+      expect(extractedFields['Phone Number']).toEqual(['+1-555-123-4567']);
+      expect(extractedFields['Video Call URLs']).toContain('https://zoom.us/j/123456789');
     });
 
-    it('should extract Teams links from description', () => {
-      const event = {
-        description: 'Microsoft Teams meeting: https://teams.microsoft.com/l/meetup-join/abc123def'
-      };
-
-      const { callUrl, callType } = extractMeetingInfo(event);
-      expect(callUrl).toBe('https://teams.microsoft.com/l/meetup-join/abc123def');
-      expect(callType).toBe('Microsoft Teams');
-    });
-
-    it('should return null values when no meeting info found', () => {
+    it('should return empty object when no patterns provided', () => {
       const event = {
         summary: 'Regular meeting'
       };
 
-      const { callUrl, callType } = extractMeetingInfo(event);
-      expect(callUrl).toBeNull();
-      expect(callType).toBeNull();
+      const extractedFields = extractFields(event, []);
+      expect(extractedFields).toEqual({});
+    });
+
+    it('should return empty object when no matches found', () => {
+      const event = {
+        summary: 'Regular meeting'
+      };
+
+      const extractedFields = extractFields(event, DEFAULT_FIELD_EXTRACTION_PATTERNS);
+      expect(extractedFields).toEqual({});
     });
   });
 

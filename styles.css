@@ -3,3 +3,107 @@
 	/* Styling for ICS Settings modal */
 padding-top: 2em;
 }
+
+
+/* Field section headers - smaller than main headings */
+.field-extraction-patterns .field-section-header {
+	margin-top: 16px;
+	margin-bottom: 8px;
+}
+
+.field-extraction-patterns .field-section-header:first-child {
+	margin-top: 8px;
+}
+
+.field-extraction-patterns .field-section-header .setting-item-name {
+	color: var(--text-accent);
+	font-weight: var(--font-medium);
+	font-size: var(--font-ui-medium);
+}
+
+/* Legacy field extraction pattern grouping (keeping for compatibility) */
+.field-extraction-patterns .setting-item.mod-heading {
+	margin-top: 20px;
+	margin-bottom: 8px;
+	border-bottom: 1px solid var(--background-modifier-border);
+	padding-bottom: 4px;
+}
+
+.field-extraction-patterns .setting-item.mod-heading:first-child {
+	margin-top: 10px;
+}
+
+.field-extraction-patterns .setting-item.mod-heading .setting-item-name {
+	color: var(--text-accent);
+	font-weight: var(--font-semibold);
+	font-size: var(--font-ui-medium);
+}
+
+/* Compatibility note styling */
+.compatibility-note {
+	margin-top: 24px;
+	padding: 12px 16px;
+	background: var(--background-secondary);
+	border: 1px solid var(--background-modifier-border);
+	border-radius: 6px;
+	font-size: var(--font-ui-small);
+	line-height: 1.4;
+}
+
+.compatibility-note p {
+	margin: 0 0 8px 0;
+	color: var(--text-muted);
+}
+
+.compatibility-note p:last-child {
+	margin-bottom: 0;
+}
+
+.compatibility-note code {
+	background: var(--background-modifier-hover);
+	padding: 2px 4px;
+	border-radius: 3px;
+	font-family: var(--font-monospace);
+	font-size: 0.9em;
+	color: var(--text-accent);
+}
+
+/* Field name tip styling */
+.field-name-tip {
+	margin-top: 16px;
+	padding: 12px 16px;
+	background: var(--background-secondary);
+	border: 1px solid var(--background-modifier-border);
+	border-radius: 6px;
+	font-size: var(--font-ui-small);
+	line-height: 1.4;
+}
+
+.field-name-tip p {
+	margin: 0 0 8px 0;
+	color: var(--text-muted);
+}
+
+.field-name-tip p:last-child {
+	margin-bottom: 0;
+}
+
+.field-name-tip code {
+	background: var(--background-modifier-hover);
+	padding: 2px 4px;
+	border-radius: 3px;
+	font-family: var(--font-monospace);
+	font-size: 0.9em;
+	color: var(--text-accent);
+}
+
+/* Modal title styling */
+.modal-title {
+	margin: 0 0 20px 0;
+	padding: 0;
+	font-size: var(--font-ui-large);
+	font-weight: var(--font-semibold);
+	color: var(--text-normal);
+	border-bottom: 1px solid var(--background-modifier-border);
+	padding-bottom: 8px;
+}

@@ -29,6 +29,7 @@ This plugin is in the community plugin browser in Obsidian. Search for ICS and y
 ## Setup
 
 ### Get Your Google Calendar URL
+
 1. From [Google Calendar](https://calendar.google.com), look on the left-hand side for the "My Calendars" section.
 2. Within that list, find the Calendar that you want to integrate into Obsidian.
 3. Click on the Three Dots Menu (on the right of the calendar name), then click on 'Settings'.
@@ -36,13 +37,15 @@ This plugin is in the community plugin browser in Obsidian. Search for ICS and y
 5. On this page, click on the "copy" button next to the "Secret Address in iCal Format". Google Calendar will give you a warning about not sharing it with anyone.
 
 ### Get your Microsoft Office 365 Calendar URL
-1.  From [Outlook Web App](https://outlook.office.com/), click the gear in the upper right to open the settings panel
-2.  Select Calendar on the left, then Shared Calendars in the middle
-3.  In the Publish a Calendar section, select the calendar and permissions you want based on the data you want Obsidian to have access to.
-4.  Click Publish
-5.  Copy the ICS URL
+
+1. From [Outlook Web App](https://outlook.office.com/), click the gear in the upper right to open the settings panel
+2. Select Calendar on the left, then Shared Calendars in the middle
+3. In the Publish a Calendar section, select the calendar and permissions you want based on the data you want Obsidian to have access to.
+4. Click Publish
+5. Copy the ICS URL
 
 ### Obsidian Plugin Setup
+
 1. Click the "+" button to add a new calendar.
 2. Choose a name for the calendar, select "Calendar Type" as "Remote URL", and then paste the Secret Address URL into the box labeled "Calendar URL".
 3. Customize your format settings for the specific calendar. These tie to the Output Format for that specific calendar:  whether to include a checkbox for each scheduled item, the event end time, the calendar name, event summary, event location, event description
@@ -52,6 +55,89 @@ This plugin is in the community plugin browser in Obsidian. Search for ICS and y
 
 ![Settings Screenshot](https://github.com/cloud-atlas-ai/obsidian-ics/blob/master/docs/2023-09-03-settings.png?raw=true)
 
+### Field Extraction
+
+The plugin can extract custom fields from calendar events using configurable patterns. This powerful feature allows you to extract any text data and organize it into named fields.
+
+> **✨ New in this version**: This expands the previous video call URL extraction feature into a fully generic system. Your existing templates using `callUrl` and `callType` continue to work unchanged, but you now have access to much more powerful extraction capabilities through `extractedFields`.
+
+#### How It Works
+
+- **Flexible Patterns**: Use simple text matching or regular expressions
+- **Custom Field Names**: Extract data into any field name you choose
+- **Multiple Matches**: Each field can contain multiple extracted values
+- **Priority-Based**: Patterns are processed in priority order
+
+#### Default Configuration
+
+By default, the plugin extracts video call URLs into the "Video Call URL" field:
+
+- **Google Meet**: Detected from `GOOGLE-CONFERENCE` field
+- **Zoom**: URLs containing `zoom.us`
+- **Skype**: URLs matching `https://join.skype.com/` pattern
+- **Microsoft Teams**: Teams meeting URLs
+
+#### Custom Extraction Examples
+
+You can create patterns to extract any information:
+
+- **Additional Video Calls**: Extend beyond the defaults:
+  - WebEx: `webex.com` → "Video Call URLs" field
+  - GoToMeeting: `gotomeeting.com` → "Video Call URLs" field
+  - Jitsi: `meet.jit.si` → "Video Call URLs" field
+- **Links**: `(https?|ftp|file)://[^\s<>"]+` → "Links" field
+- **Phone Numbers**: Create multiple patterns for the same field:
+  - US format: `\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}` → "Phone Numbers" field
+  - International: `\+\d{1,3}[-.\s]?\d{1,14}` → "Phone Numbers" field
+- **Meeting IDs**: `Meeting ID: (\d+)` → "Meeting IDs" field
+
+#### Pattern Configuration
+
+1. **Pattern Types**:
+   - **Contains**: Simple text matching (e.g., "zoom.us")
+   - **Regex**: Full regular expression support with capture groups
+
+2. **Pattern Management**:
+   - Set priority (lower numbers are checked first)
+   - Assign custom field names
+   - Delete patterns you don't need
+   - Reset to defaults if needed
+   - Real-time validation for regex patterns
+
+#### Accessing Extracted Data
+
+**Legacy Support (Backward Compatible)**:
+
+- `callUrl` and `callType` continue to work for existing templates
+- These map to the first "Video Call URL" extraction for compatibility
+
+**New Approach (Recommended)**:
+
+- Use `extractedFields["Field Name"]` to access any extracted data
+- Each field returns an array of all matching values
+- Much more flexible and powerful than the legacy fields
+
+**Example**:
+
+```javascript
+// Legacy approach (still works but limited)
+if (event.callUrl) {
+  // Only gets the first video call URL
+}
+
+// New approach (recommended)
+const videoUrls = event.extractedFields["Video Call URLs"] || [];
+const meetingIds = event.extractedFields["Meeting IDs"] || [];
+const phoneNumbers = event.extractedFields["Phone Numbers"] || [];
+
+// Handle multiple values
+videoUrls.forEach(url => {
+  // Process each video call URL
+});
+```
+
+> **💡 Tip**: Consider migrating your templates to use `extractedFields` for more flexibility and to access all extracted data, not just the first match.
+
 ### Usage
 
 Go to a daily note, use the `ICS: Import events` command.
@@ -60,7 +146,7 @@ For customizations not available to the formatting, use Dataview or Templater (s
 
 ### Data view usage
 
-You can also use a [Dataview](https://blacksmithgu.github.io/obsidian-dataview/) to add your events to your journal notes when they get created. 
+You can also use a [Dataview](https://blacksmithgu.github.io/obsidian-dataview/) to add your events to your journal notes when they get created.
 
 **The `getEvents()` method accepts flexible date inputs**: date strings (like "2025-03-01" or "March 1, 2025"), moment objects, or JavaScript Date objects. This makes it easy to work with whatever date format is most convenient for your use case.
 
