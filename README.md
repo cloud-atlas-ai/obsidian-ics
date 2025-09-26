@@ -29,6 +29,7 @@ This plugin is in the community plugin browser in Obsidian. Search for ICS and y
 ## Setup
 
 ### Get Your Google Calendar URL
+
 1. From [Google Calendar](https://calendar.google.com), look on the left-hand side for the "My Calendars" section.
 2. Within that list, find the Calendar that you want to integrate into Obsidian.
 3. Click on the Three Dots Menu (on the right of the calendar name), then click on 'Settings'.
@@ -36,13 +37,15 @@ This plugin is in the community plugin browser in Obsidian. Search for ICS and y
 5. On this page, click on the "copy" button next to the "Secret Address in iCal Format". Google Calendar will give you a warning about not sharing it with anyone.
 
 ### Get your Microsoft Office 365 Calendar URL
-1.  From [Outlook Web App](https://outlook.office.com/), click the gear in the upper right to open the settings panel
-2.  Select Calendar on the left, then Shared Calendars in the middle
-3.  In the Publish a Calendar section, select the calendar and permissions you want based on the data you want Obsidian to have access to.
-4.  Click Publish
-5.  Copy the ICS URL
+
+1. From [Outlook Web App](https://outlook.office.com/), click the gear in the upper right to open the settings panel
+2. Select Calendar on the left, then Shared Calendars in the middle
+3. In the Publish a Calendar section, select the calendar and permissions you want based on the data you want Obsidian to have access to.
+4. Click Publish
+5. Copy the ICS URL
 
 ### Obsidian Plugin Setup
+
 1. Click the "+" button to add a new calendar.
 2. Choose a name for the calendar, select "Calendar Type" as "Remote URL", and then paste the Secret Address URL into the box labeled "Calendar URL".
 3. Customize your format settings for the specific calendar. These tie to the Output Format for that specific calendar:  whether to include a checkbox for each scheduled item, the event end time, the calendar name, event summary, event location, event description
@@ -52,6 +55,39 @@ This plugin is in the community plugin browser in Obsidian. Search for ICS and y
 
 ![Settings Screenshot](https://github.com/cloud-atlas-ai/obsidian-ics/blob/master/docs/2023-09-03-settings.png?raw=true)
 
+### Video Call URL Extraction
+
+The plugin automatically extracts video call URLs from calendar events and displays them as clickable links. You can configure which platforms are detected and how URLs are extracted through the "Video Call URL Extraction" settings.
+
+#### Default Supported Platforms
+
+- **Google Meet**: Automatically detected from `GOOGLE-CONFERENCE` field
+- **Zoom**: Detects `zoom.us` URLs in location or description
+- **Skype**: Extracts `https://join.skype.com/` URLs using regex
+- **Microsoft Teams**: Extracts Teams meeting URLs using regex
+
+#### Custom Patterns
+
+You can add custom patterns for other video conferencing platforms:
+
+1. **Pattern Types**:
+   - **Contains**: Simple text matching (e.g., "webex.com" to catch any WebEx URL)
+   - **Regex**: Full regular expression support for precise matching
+2. **Common Use Cases**:
+   - Add `https://` (contains) to extract any HTTP/HTTPS link as a potential video call
+   - Create specific patterns for internal tools or less common platforms
+   - Use regex for complex URL structures
+3. **Pattern Management**:
+   - Set priority (lower numbers are checked first)
+   - Delete patterns you don't need
+   - Reset to defaults if needed
+   - Real-time validation for regex patterns
+
+Example custom patterns:
+
+- GoToMeeting: `gotomeeting.com` (contains)
+- WebEx: `https://[\\w-]+\\.webex\\.com/` (regex)
+
 ### Usage
 
 Go to a daily note, use the `ICS: Import events` command.
@@ -60,7 +96,7 @@ For customizations not available to the formatting, use Dataview or Templater (s
 
 ### Data view usage
 
-You can also use a [Dataview](https://blacksmithgu.github.io/obsidian-dataview/) to add your events to your journal notes when they get created. 
+You can also use a [Dataview](https://blacksmithgu.github.io/obsidian-dataview/) to add your events to your journal notes when they get created.
 
 **The `getEvents()` method accepts flexible date inputs**: date strings (like "2025-03-01" or "March 1, 2025"), moment objects, or JavaScript Date objects. This makes it easy to work with whatever date format is most convenient for your use case.
 
