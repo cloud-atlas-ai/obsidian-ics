@@ -13,16 +13,17 @@ import {
   Calendar,
   DEFAULT_CALENDAR_FORMAT
 } from "./ICSSettings";
+// eslint-disable-next-line @typescript-eslint/no-require-imports
 import moment = require("moment");
 
 export function getCalendarElement(
   icsName: string): HTMLElement {
-  let calendarElement, titleEl;
 
-  calendarElement = createDiv({
+  const calendarElement = createDiv({
     cls: `calendar calendar-${icsName}`,
   });
-  titleEl = calendarElement.createEl("summary", {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const titleEl = calendarElement.createEl("summary", {
     cls: `calendar-name ${icsName}`,
     text: icsName
   });
@@ -75,7 +76,7 @@ export default class ICSSettingsTab extends PluginSettingTab {
   }
 
   display(): void {
-    let {
+    const {
       containerEl
     } = this;
 
@@ -85,6 +86,7 @@ export default class ICSSettingsTab extends PluginSettingTab {
       "ics-setting-calendar"
     );
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const calnedarSetting = new Setting(calendarContainer)
       .setHeading().setName("Calendars");
 
@@ -92,11 +94,11 @@ export default class ICSSettingsTab extends PluginSettingTab {
       .setName("Add new")
       .setDesc("Add a new calendar")
       .addButton((button: ButtonComponent): ButtonComponent => {
-        let b = button
+        const b = button
           .setTooltip("Add Additional")
           .setButtonText("+")
           .onClick(async () => {
-            let modal = new SettingsModal(this.app, this.plugin);
+            const modal = new SettingsModal(this.app, this.plugin);
 
             modal.onClose = async () => {
               if (modal.saved) {
@@ -120,11 +122,11 @@ export default class ICSSettingsTab extends PluginSettingTab {
     const additional = calendarContainer.createDiv("calendar");
 
     const sortedCalendarKeys = Object.keys(this.plugin.data.calendars).sort();
-    for (let calendarKey of sortedCalendarKeys) {
+    for (const calendarKey of sortedCalendarKeys) {
       const calendar = this.plugin.data.calendars[calendarKey];
-      let setting = new Setting(additional);
+      const setting = new Setting(additional);
 
-      let calEl = getCalendarElement(
+      const calEl = getCalendarElement(
         calendar.icsName);
       setting.infoEl.replaceWith(calEl);
 
@@ -133,7 +135,7 @@ export default class ICSSettingsTab extends PluginSettingTab {
           b.setIcon("pencil")
             .setTooltip("Edit")
             .onClick(() => {
-              let modal = new SettingsModal(this.app, this.plugin, calendar);
+              const modal = new SettingsModal(this.app, this.plugin, calendar);
 
               modal.onClose = async () => {
                 if (modal.saved) {
@@ -162,11 +164,13 @@ export default class ICSSettingsTab extends PluginSettingTab {
         });
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const formatSetting = new Setting(containerEl)
       .setHeading().setName("Output Format");
 
 
     let timeFormat: TextComponent;
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const timeFormatSetting = new Setting(containerEl)
       .setName("Time format")
       .setDesc(this.timeFormattingDescription())
@@ -179,6 +183,7 @@ export default class ICSSettingsTab extends PluginSettingTab {
         });
       });
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const dataViewSyntaxSetting = new Setting(containerEl)
       .setName('DataView Metadata syntax for start and end times')
       .setDesc(this.dataViewSyntaxDescription())
@@ -244,7 +249,7 @@ class SettingsModal extends Modal {
   }
 
   display() {
-    let {
+    const {
       contentEl
     } = this;
 
@@ -253,6 +258,7 @@ class SettingsModal extends Modal {
     const settingDiv = contentEl.createDiv({ cls: 'ics-settings' });
 
     let nameText: TextComponent;
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const nameSetting = new Setting(settingDiv)
       .setName("Calendar Name")
       .addText((text) => {
@@ -263,6 +269,7 @@ class SettingsModal extends Modal {
         });
       });
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const ownerEmailSetting = new Setting(settingDiv)
       .setName('Calendar Owner Email (Optional)')
       .setDesc('Used to skip declined events')
@@ -273,6 +280,7 @@ class SettingsModal extends Modal {
         });
       });
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const calendarTypeSetting = new Setting(settingDiv)
       .setName('Calendar Type')
       .setDesc('Select the type of calendar (Remote URL or Vault Folder with ICS files, maintained manually or via automation like vdirsyncer)')
@@ -293,7 +301,7 @@ class SettingsModal extends Modal {
       // First, remove the existing URL setting if it exists
       settingDiv.querySelectorAll('.url-setting').forEach(el => el.remove());
 
-      let urlSetting = new Setting(urlSettingDiv)
+      const urlSetting = new Setting(urlSettingDiv)
          .setDesc(this.calendarType === 'vdir' ? 'Select the folder containing ICS files. Must be in the current Obdidian Vault and have at least one ics.' : 'Enter the URL of the calendar')
         .setName(this.calendarType === 'vdir' ? 'Vault Folder' : 'Calendar URL');
       urlSetting.settingEl.addClass('url-setting');
@@ -328,12 +336,13 @@ class SettingsModal extends Modal {
       .setHeading().setName("Output Format");
 
     // set each of the calendar format settings to the default if it's undefined
-    for (let f in DEFAULT_CALENDAR_FORMAT) {
+    for (const f in DEFAULT_CALENDAR_FORMAT) {
       if (this.format[f] == undefined) {
         this.format[f] = DEFAULT_CALENDAR_FORMAT[f];
       }
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const checkboxToggle = new Setting(settingDiv)
       .setName('Checkbox')
       .setDesc('Use a checkbox for each event (will be a bullet otherwise)')
@@ -344,6 +353,7 @@ class SettingsModal extends Modal {
           this.hasChanges = true;
         }));
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const endTimeToggle = new Setting(settingDiv)
       .setName('End time')
       .setDesc('Include the event\'s end time')
@@ -354,6 +364,7 @@ class SettingsModal extends Modal {
           this.hasChanges = true;
         }));
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const icsNameToggle = new Setting(settingDiv)
       .setName('Calendar name')
       .setDesc('Include the calendar name')
@@ -364,6 +375,7 @@ class SettingsModal extends Modal {
           this.hasChanges = true;
         }));
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const summaryToggle = new Setting(settingDiv)
       .setName('Summary')
       .setDesc('Include the summary field')
@@ -374,6 +386,7 @@ class SettingsModal extends Modal {
           this.hasChanges = true;
         }));
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const locationToggle = new Setting(settingDiv)
       .setName('Location')
       .setDesc('Include the location field')
@@ -384,6 +397,7 @@ class SettingsModal extends Modal {
           this.hasChanges = true;
         }));
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const descriptionToggle = new Setting(settingDiv)
       .setName('Description')
       .setDesc('Include the description field ')
@@ -394,6 +408,7 @@ class SettingsModal extends Modal {
           this.hasChanges = true;
         }));
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const showAttendeesToggle = new Setting(settingDiv)
       .setName('Show Attendees')
       .setDesc('Display attendees for the event')
@@ -404,6 +419,7 @@ class SettingsModal extends Modal {
           this.hasChanges = true;
         }));
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const showOngoingToggle = new Setting(settingDiv)
       .setName('Show Ongoing')
       .setDesc('Display multi-day events that include target date')
@@ -414,6 +430,7 @@ class SettingsModal extends Modal {
           this.hasChanges = true;
         }));
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const includeAvailableEventsToggle = new Setting(settingDiv)
       .setName("Include 'Available' Events")
       .setDesc("Display events marked as 'Available' (do not block time) in the calendar. These are also referred to as 'Transparent' events.")
@@ -424,8 +441,8 @@ class SettingsModal extends Modal {
           this.hasChanges = true;
         }));
 
-    let footerEl = contentEl.createDiv();
-    let footerButtons = new Setting(footerEl);
+    const footerEl = contentEl.createDiv();
+    const footerButtons = new Setting(footerEl);
     footerButtons.addButton((b) => {
       b.setTooltip("Save")
         .setIcon("save")
