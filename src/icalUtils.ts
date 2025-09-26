@@ -12,9 +12,7 @@ export function extractMeetingInfo(e: any, patterns?: CallUrlPattern[]): { callU
   }
 
   // Sort patterns by priority (lower numbers = higher priority)
-  const sortedPatterns = patterns
-    .filter(p => p.enabled)
-    .sort((a, b) => a.priority - b.priority);
+  const sortedPatterns = patterns.sort((a, b) => a.priority - b.priority);
 
   for (const pattern of sortedPatterns) {
     const result = checkPattern(e, pattern);

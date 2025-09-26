@@ -2,7 +2,6 @@ export interface CallUrlPattern {
     name: string;
     pattern: string;
     matchType: 'regex' | 'contains';
-    enabled: boolean;
     priority: number;
 }
 
@@ -60,28 +59,24 @@ export const DEFAULT_VIDEO_CALL_PATTERNS: CallUrlPattern[] = [
         name: "Google Meet",
         pattern: "GOOGLE-CONFERENCE",
         matchType: "contains",
-        enabled: true,
         priority: 1
     },
     {
         name: "Zoom",
         pattern: "zoom.us",
         matchType: "contains",
-        enabled: true,
         priority: 2
     },
     {
         name: "Skype",
         pattern: "https:\\/\\/join\\.skype\\.com\\/[a-zA-Z0-9]+",
         matchType: "regex",
-        enabled: true,
         priority: 3
     },
     {
         name: "Microsoft Teams",
         pattern: "https:\\/\\/teams\\.microsoft\\.com\\/l\\/meetup-join\\/[^>]+",
         matchType: "regex",
-        enabled: true,
         priority: 4
     }
 ];

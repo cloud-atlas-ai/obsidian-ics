@@ -131,12 +131,6 @@ export default class ICSSettingsTab extends PluginSettingTab {
 
       setting.setName(pattern.name)
         .setDesc(`${pattern.matchType === 'regex' ? 'Regex' : 'Contains'}: ${pattern.pattern} (Priority: ${pattern.priority})`)
-        .addToggle(toggle => toggle
-          .setValue(pattern.enabled)
-          .onChange(async (v) => {
-            pattern.enabled = v;
-            await this.plugin.saveSettings();
-          }))
         .addExtraButton((b) => {
           b.setIcon("pencil")
             .setTooltip("Edit")
@@ -672,7 +666,6 @@ class VideoCallPatternModal extends Modal {
         name: "",
         pattern: "",
         matchType: "contains",
-        enabled: true,
         priority: maxPriority + 1
       };
     }
@@ -741,17 +734,6 @@ class VideoCallPatternModal extends Modal {
         });
       });
 
-    // Enabled toggle
-    new Setting(settingDiv)
-      .setName("Enabled")
-      .setDesc("Whether this pattern is active")
-      .addToggle(toggle => toggle
-        .setValue(this.pattern.enabled)
-        .onChange(value => {
-          this.pattern.enabled = value;
-          this.hasChanges = true;
-        }));
-
     // Footer buttons
     const footerEl = contentEl.createDiv();
     const footerButtons = new Setting(footerEl);
@@ -784,7 +766,7 @@ class VideoCallPatternModal extends Modal {
         new RegExp(this.pattern.pattern);
         SettingsModal.removeValidationError(textInput);
         return true;
-      } catch (_e) {
+      } catch {
         SettingsModal.setValidationError(textInput, "Invalid regular expression");
         return false;
       }

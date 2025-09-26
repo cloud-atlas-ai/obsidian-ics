@@ -278,7 +278,7 @@ export default class ICSPlugin extends Plugin {
         needsSave = true;
       }
 
-      // Ensure enabled field exists
+      // Ensure enabled field exists (global setting)
       if (this.data.videoCallExtraction.enabled === undefined) {
         this.data.videoCallExtraction.enabled = true;
         needsSave = true;
