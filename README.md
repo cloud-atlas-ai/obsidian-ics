@@ -201,6 +201,47 @@ See [advanced Templated usage example](https://github.com/cloud-atlas-ai/obsidia
 
 You can see the available fields an the [Event interface](https://github.com/cloud-atlas-ai/obsidian-ics/blob/master/src/IEvent.ts).
 
+#### Filtering Events by Calendar
+
+Each event includes an `icsName` field containing the calendar name. You can filter events by calendar using JavaScript's `.filter()` method:
+
+```javascript
+<%*
+// Get events from a specific calendar
+var events = await app.plugins.getPlugin('ics').getEvents(moment(tp.file.title,'YYYYMMDD'));
+var workEvents = events.filter(e => e.icsName === 'Work');
+workEvents.sort((a,b) => a.utime - b.utime).forEach((e) => {
+  tR+=`- [ ] ${e.time} ${e.summary} ${e.location? e.location : ''}\n`
+})
+%>
+```
+
+You can also create separate sections for different calendars:
+
+```javascript
+<%*
+var events = await app.plugins.getPlugin('ics').getEvents(moment(tp.file.title,'YYYYMMDD'));
+
+// Personal calendar section
+tR += "## Personal\n";
+events.filter(e => e.icsName === 'Personal')
+  .sort((a,b) => a.utime - b.utime)
+  .forEach((e) => {
+    tR+=`- [ ] ${e.time} ${e.summary} ${e.location? e.location : ''}\n`
+  })
+
+// Work calendar section
+tR += "\n## Work\n";
+events.filter(e => e.icsName === 'Work')
+  .sort((a,b) => a.utime - b.utime)
+  .forEach((e) => {
+    tR+=`- [ ] ${e.time} ${e.summary} ${e.location? e.location : ''}\n`
+  })
+%>
+```
+
+The `icsName` field and other available fields can be found in the [Event interface](https://github.com/cloud-atlas-ai/obsidian-ics/blob/master/src/IEvent.ts).
+
 ### Full Calendar
 
 Or you can use [Full Calendar](https://github.com/obsidian-community/obsidian-full-calendar) to render a calendar view of your events. Here's an example of how you can use it:
