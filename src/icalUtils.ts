@@ -169,7 +169,26 @@ function processRecurringRules(event: any, sortedDaysToMatch: string[], excluded
 }
 
 function shouldIncludeOngoing(event: any, dayToMatch: string): boolean {
-  return moment(dayToMatch).isBetween(moment(event.start), moment(event.end), "day");
+  const day = moment(dayToMatch, 'YYYY-MM-DD').startOf('day');
+  const eventStartDay = moment(event.start).startOf('day');
+  const eventEndDay = moment(event.end).startOf('day');
+
+  // Avoid duplicating the initial occurrence; it's already included elsewhere.
+  if (day.isSame(eventStartDay, 'day')) {
+    return false;
+  }
+
+  // Include full days between start and end.
+  if (day.isBetween(eventStartDay, eventEndDay, 'day', '()')) {
+    return true;
+  }
+
+  // Include the ending day when the event continues past its start.
+  if (day.isSame(eventEndDay, 'day')) {
+    return moment(event.end).diff(eventEndDay, 'minutes') > 0;
+  }
+
+  return false;
 }
 
 export function filterMatchingEvents(icsArray: any[], daysToMatch: string[], showOngoing: boolean) {

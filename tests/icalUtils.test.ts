@@ -81,6 +81,34 @@ END:VCALENDAR`;
       expect(withOngoing[0].summary).toBe('Multi-day Event');
     });
 
+    it('should show multi-day events on all spanned days only when showOngoing is enabled', () => {
+      const events = [{
+        summary: 'Spanning Event',
+        start: new Date('2025-10-09T09:00:00Z'),
+        end: new Date('2025-10-11T17:00:00Z'),
+        uid: 'spanning-event-uid'
+      }];
+
+      const dates = ['2025-10-09', '2025-10-10', '2025-10-11'];
+
+      // With showOngoing OFF: only the start date should include the event
+      const eventsOnDatesWithOngoingOff = dates.map(date => filterMatchingEvents(events, [date], false));
+      expect(eventsOnDatesWithOngoingOff[0]).toHaveLength(1); // 2025-10-09 (start)
+      expect(eventsOnDatesWithOngoingOff[1]).toHaveLength(0); // 2025-10-10 (middle)
+      expect(eventsOnDatesWithOngoingOff[2]).toHaveLength(0); // 2025-10-11 (end)
+
+      // With showOngoing ON: all dates from start to end should include the event
+      const eventsOnDatesWithOngoingOn = dates.map(date => filterMatchingEvents(events, [date], true));
+      expect(eventsOnDatesWithOngoingOn[0]).toHaveLength(1); // 2025-10-09 (start)
+      expect(eventsOnDatesWithOngoingOn[1]).toHaveLength(1); // 2025-10-10 (middle)
+      expect(eventsOnDatesWithOngoingOn[2]).toHaveLength(1); // 2025-10-11 (end)
+
+      // Sanity: verify correct event is returned
+      eventsOnDatesWithOngoingOn.forEach((res) => {
+        expect(res[0].summary).toBe('Spanning Event');
+      });
+    });
+
     it('should skip cancelled events', () => {
       const events = [{
         summary: 'Cancelled Event',
@@ -227,7 +255,7 @@ END:VCALENDAR`;
       ];
 
       const results = testDates.map(date => filterMatchingEvents(events, [date], false));
-      
+
       expect(results[0]).toHaveLength(1); // Original
       expect(results[1]).toHaveLength(1); // First recurrence
       expect(results[2]).toHaveLength(0); // Excluded
